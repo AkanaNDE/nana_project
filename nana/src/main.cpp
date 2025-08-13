@@ -201,19 +201,17 @@ bool createEntities()
     rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator);
 
 
-    RCCHECK(rclc_node_init_default(&node, "white_slot_shooter_node", "", &support));
-
     RCCHECK(rclc_publisher_init_best_effort(
         &debug_motor_publisher,
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
-        "/white_slot/debug/cmd_move/rpm"));
+        "/nana/debug/cmd_move/rpm"));
 
     RCCHECK(rclc_subscription_init_default(
         &motor_subscriber,
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
-        "/white_slot/cmd_move/rpm"));
+        "/nana/cmd_move/rpm"));
 
 
 
