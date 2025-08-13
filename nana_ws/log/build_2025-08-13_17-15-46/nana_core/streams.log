@@ -1,0 +1,22 @@
+[1.434s] Invoking command in '/home/nnn/nana_project/nana_ws/src/nana_core': PYTHONPATH=/home/nnn/nana_project/nana_ws/build/nana_core/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/nnn/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/nana_core build --build-base /home/nnn/nana_project/nana_ws/build/nana_core/build install --record /home/nnn/nana_project/nana_ws/build/nana_core/install.log --single-version-externally-managed install_data
+[1.652s] running egg_info
+[1.666s] writing ../../build/nana_core/nana_core.egg-info/PKG-INFO
+[1.666s] writing dependency_links to ../../build/nana_core/nana_core.egg-info/dependency_links.txt
+[1.669s] writing entry points to ../../build/nana_core/nana_core.egg-info/entry_points.txt
+[1.672s] writing requirements to ../../build/nana_core/nana_core.egg-info/requires.txt
+[1.676s] writing top-level names to ../../build/nana_core/nana_core.egg-info/top_level.txt
+[1.708s] reading manifest file '../../build/nana_core/nana_core.egg-info/SOURCES.txt'
+[1.709s] writing manifest file '../../build/nana_core/nana_core.egg-info/SOURCES.txt'
+[1.710s] running build
+[1.710s] running build_py
+[1.710s] running install
+[1.719s] running install_lib
+[1.734s] running install_data
+[1.735s] running install_egg_info
+[1.751s] removing '/home/nnn/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core-0.0.0-py3.12.egg-info' (and everything under it)
+[1.751s] Copying ../../build/nana_core/nana_core.egg-info to /home/nnn/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core-0.0.0-py3.12.egg-info
+[1.752s] running install_scripts
+[1.876s] Installing driverpm_node script to /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core
+[1.876s] Installing joystick_node script to /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core
+[1.879s] writing list of installed files to '/home/nnn/nana_project/nana_ws/build/nana_core/install.log'
+[1.965s] Invoked command in '/home/nnn/nana_project/nana_ws/src/nana_core' returned '0': PYTHONPATH=/home/nnn/nana_project/nana_ws/build/nana_core/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/nnn/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/nana_core build --build-base /home/nnn/nana_project/nana_ws/build/nana_core/build install --record /home/nnn/nana_project/nana_ws/build/nana_core/install.log --single-version-externally-managed install_data
