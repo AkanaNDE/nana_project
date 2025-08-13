@@ -49,10 +49,10 @@
     } while (0)
 
 
-#define AIN1 33
-#define AIN2 25
-#define BIN1 26
-#define BIN2 27
+#define AIN1 25
+#define AIN2 26
+#define BIN1 14
+#define BIN2 12
 
 
 #define PWM_FREQ 5000        // 5 kHz PWM frequency
@@ -186,57 +186,61 @@ void twistCallback(const void *msgin)
 
 bool createEntities()
 {
-
-
-
+    // Get default allocator
     allocator = rcl_get_default_allocator();
 
-
+    // Initialize the debug_motor_msg
     geometry_msgs__msg__Twist__init(&debug_motor_msg);
 
+    // Initialize RCL options and set domain ID to 96
     init_options = rcl_get_zero_initialized_init_options();
-    rcl_init_options_init(&init_options, allocator);
-    rcl_init_options_set_domain_id(&init_options, 96);
+    RCCHECK(rcl_init_options_init(&init_options, allocator));
+    RCCHECK(rcl_init_options_set_domain_id(&init_options, 96));
 
-    rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator);
+    // Initialize support object with custom init options
+    RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator));
 
+    // Initialize the node
+    RCCHECK(rclc_node_init_default(&node, "esp32_node", "", &support));
 
-    RCCHECK(rclc_node_init_default(&node, "white_slot_shooter_node", "", &support));
-
+    // Initialize the publisher
     RCCHECK(rclc_publisher_init_best_effort(
         &debug_motor_publisher,
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
-        "/white_slot/debug/cmd_move/rpm"));
+        "/nana/debug/cmd_move/rpm"));
 
+    // Initialize the subscriber
     RCCHECK(rclc_subscription_init_default(
         &motor_subscriber,
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
-        "/white_slot/cmd_move/rpm"));
+        "/nana/cmd_move/rpm"));
 
-
-
-
-
+    // Initialize the timer
     const unsigned int control_timeout = 20;
     RCCHECK(rclc_timer_init_default(
         &control_timer,
         &support,
         RCL_MS_TO_NS(control_timeout),
         controlCallback));
+
+    // Initialize the executor
     executor = rclc_executor_get_zero_initialized_executor();
     RCCHECK(rclc_executor_init(&executor, &support.context, 5, &allocator));
 
+    // Add subscription to executor
     RCCHECK(rclc_executor_add_subscription(
         &executor,
         &motor_subscriber,
         &motor_msg,
         &twistCallback,
         ON_NEW_DATA));
-        
-    
+
+    // Add timer to executor
     RCCHECK(rclc_executor_add_timer(&executor, &control_timer));
+
+    // Sync time (optional)
     syncTime();
 
     return true;
