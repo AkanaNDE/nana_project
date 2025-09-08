@@ -41,12 +41,13 @@ void loop() {
   digitalWrite(A12, LOW);
   delay(2000);
 
-  ledcAttachPin(B11, 1);
+  ledcAttachPin(B12, 1);
   ledcSetup(1, 1000, 8);
   ledcWrite(1, 200); // ความเร็ว 0-255
-  digitalWrite(B12, LOW);
+  digitalWrite(B11, LOW);
   delay(2000);
 
   Serial.print("Encoder Count: ");
   Serial.println(encoderCount);
+
 }

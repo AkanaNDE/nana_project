@@ -51,8 +51,8 @@
 
 #define AIN1 25
 #define AIN2 26
-#define BIN1 14
-#define BIN2 12
+#define BIN1 12
+#define BIN2 14
 
 
 #define PWM_FREQ 5000        // 5 kHz PWM frequency
