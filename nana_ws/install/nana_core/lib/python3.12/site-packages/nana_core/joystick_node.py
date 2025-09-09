@@ -46,6 +46,10 @@ class Joystick(Node):
             Twist, "/nana/cmd_move", qos_profile=qos.qos_profile_system_default
         )
 
+        # self.pub_move = self.create_publisher(
+        #     Twist, "/nana/cmd_arm", qos_profile=qos.qos_profile_system_default
+        # )
+
         
         self.create_subscription(
             Joy, '/nana/joy', self.joy, qos_profile=qos.qos_profile_sensor_data # 10
@@ -98,8 +102,10 @@ class Joystick(Node):
     def sendData(self):
         
         cmd_vel_move = Twist()
+        # cmd_Arm = Twist()
 
-
+        # cmd_Arm.linear.y = float(self.gamepad.r2 * self.maxspeed)
+        # cmd_Arm.angular.z = float(self.gamepad.l2 * self.maxspeed)
 
         cmd_vel_move.linear.y = float(self.gamepad.ly * self.maxspeed)
         cmd_vel_move.angular.z = float(self.gamepad.rx * self.maxspeed)

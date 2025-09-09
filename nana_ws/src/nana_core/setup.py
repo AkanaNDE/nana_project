@@ -25,6 +25,7 @@ setup(
         'console_scripts': [
             'driverpm_node = nana_core.driverpm_node:main',
             'joystick_node = nana_core.joystick_node:main',
+            'armrpm_node = nana_core.armrpm_node:main',
         ],
     },
 )

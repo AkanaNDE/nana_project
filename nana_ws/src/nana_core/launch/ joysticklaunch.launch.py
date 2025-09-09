@@ -40,6 +40,13 @@ def generate_launch_description():
         namespace="",
     )
 
+    arm_node = Node(
+        package="nana_core",
+        executable="armrpm_node",
+        name="Arm_Node",
+        namespace="",
+    )
+
     # node_microros_1 = Node(
     #     package="micro_ros_agent",
     #     executable="micro_ros_agent",
@@ -52,6 +59,7 @@ def generate_launch_description():
     ld.add_action(joystick_control)
     # ld.add_action(node_microros_1)
     ld.add_action(drive_node)
+    ld.add_action(arm_node)
 
 
     return ld
