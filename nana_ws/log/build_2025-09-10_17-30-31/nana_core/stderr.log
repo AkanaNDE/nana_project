@@ -1,0 +1,5 @@
+  File "/home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/armrpm_node.py", line 33
+    self.turnSpeed: float = 0.0ssss
+                              ^
+SyntaxError: invalid decimal literal
+

@@ -1,0 +1,30 @@
+running egg_info
+creating ../build/nana_core/nana_core.egg-info
+writing ../build/nana_core/nana_core.egg-info/PKG-INFO
+writing dependency_links to ../build/nana_core/nana_core.egg-info/dependency_links.txt
+writing requirements to ../build/nana_core/nana_core.egg-info/requires.txt
+writing top-level names to ../build/nana_core/nana_core.egg-info/top_level.txt
+writing manifest file '../build/nana_core/nana_core.egg-info/SOURCES.txt'
+reading manifest file '../build/nana_core/nana_core.egg-info/SOURCES.txt'
+writing manifest file '../build/nana_core/nana_core.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/nadeem/nana_project/nana_ws/build/nana_core/build
+creating /home/nadeem/nana_project/nana_ws/build/nana_core/build/lib
+creating /home/nadeem/nana_project/nana_ws/build/nana_core/build/lib/nana_core
+copying nana_core/__init__.py -> /home/nadeem/nana_project/nana_ws/build/nana_core/build/lib/nana_core
+running install
+running install_lib
+creating /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core
+copying /home/nadeem/nana_project/nana_ws/build/nana_core/build/lib/nana_core/__init__.py -> /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core
+byte-compiling /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/__init__.py to __init__.cpython-312.pyc
+running install_data
+creating /home/nadeem/nana_project/nana_ws/install/nana_core/share/ament_index
+creating /home/nadeem/nana_project/nana_ws/install/nana_core/share/ament_index/resource_index
+creating /home/nadeem/nana_project/nana_ws/install/nana_core/share/ament_index/resource_index/packages
+copying resource/nana_core -> /home/nadeem/nana_project/nana_ws/install/nana_core/share/ament_index/resource_index/packages
+copying package.xml -> /home/nadeem/nana_project/nana_ws/install/nana_core/share/nana_core
+running install_egg_info
+Copying ../build/nana_core/nana_core.egg-info to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core-0.0.0-py3.12.egg-info
+running install_scripts
+writing list of installed files to '/home/nadeem/nana_project/nana_ws/build/nana_core/install.log'
