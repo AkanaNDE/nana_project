@@ -13,26 +13,11 @@ import math
 
 
 class Arm_node(Node):
-
-
-    moveSpeed: float = 0.0
-    slideSpeed: float = 0.0 
-    turnSpeed: float = 0.0
-
     motor1Speed : float = 0
-    motor2Speed : float = 0
-    motor3Speed : float = 0
-    motor4Speed : float = 0
-
+    maxRPM : int = 0
 
     def __init__(self):
         super().__init__("Arm_node")
-
-        
-        self.moveSpeed: float = 0.0
-        self.turnSpeed: float = 0.0
-
-        self.maxSpeed : int = 1023.0 # pwm
         self.maxRPM : int = 150
         self.motor1Speed : float = 0
 
@@ -63,11 +48,6 @@ class Arm_node(Node):
 
         # Store or send these speeds to motor controller
         self.motor1Speed = rpm_left
-
-
-        print(f"Left Motor: {self.motor1Speed:.2f} RPM, Right Motor: {self.motor2Speed:.2f} RPM")
-
-
         
 
             

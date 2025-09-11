@@ -47,6 +47,15 @@ def generate_launch_description():
         namespace="",
     )
 
+    maho_node = Node(
+        package="nana_core",
+        executable="mahorpm_node",
+        name="Maho_Node",
+        namespace="",
+
+
+    )
+
     # node_microros_1 = Node(
     #     package="micro_ros_agent",
     #     executable="micro_ros_agent",
@@ -60,6 +69,7 @@ def generate_launch_description():
     # ld.add_action(node_microros_1)
     ld.add_action(drive_node)
     ld.add_action(arm_node)
+    ld.add_action(maho_node)
 
 
     return ld

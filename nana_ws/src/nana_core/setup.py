@@ -26,6 +26,7 @@ setup(
             'driverpm_node = nana_core.driverpm_node:main',
             'joystick_node = nana_core.joystick_node:main',
             'armrpm_node = nana_core.armrpm_node:main',
+            'mahorpm_node = nana_core.mahorpm_node:main',
         ],
     },
 )
