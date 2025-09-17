@@ -1,11 +1,13 @@
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/__init__.py
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/armrpm_node.py
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/mahorpm_node.py
+/home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/griprpm_node.py
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/joystick_node.py
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/driverpm_node.py
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/__pycache__/__init__.cpython-312.pyc
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/__pycache__/armrpm_node.cpython-312.pyc
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/__pycache__/mahorpm_node.cpython-312.pyc
+/home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/__pycache__/griprpm_node.cpython-312.pyc
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/__pycache__/joystick_node.cpython-312.pyc
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/__pycache__/driverpm_node.cpython-312.pyc
 /home/nadeem/nana_project/nana_ws/install/nana_core/share/ament_index/resource_index/packages/nana_core
@@ -20,5 +22,6 @@
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core-0.0.0-py3.12.egg-info/zip-safe
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core/armrpm_node
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core/driverpm_node
+/home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core/griprpm_node
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core/joystick_node
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core/mahorpm_node

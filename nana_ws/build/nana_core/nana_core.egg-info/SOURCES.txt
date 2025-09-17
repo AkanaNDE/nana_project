@@ -12,6 +12,7 @@ launch/ joysticklaunch.launch.py
 nana_core/__init__.py
 nana_core/armrpm_node.py
 nana_core/driverpm_node.py
+nana_core/griprpm_node.py
 nana_core/joystick_node.py
 nana_core/mahorpm_node.py
 resource/nana_core

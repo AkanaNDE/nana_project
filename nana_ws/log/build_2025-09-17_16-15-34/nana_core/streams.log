@@ -1,0 +1,25 @@
+[0.456s] Invoking command in '/home/nadeem/nana_project/nana_ws/src/nana_core': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/nadeem/nana_project/nana_ws/build/nana_core/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/nana_core build --build-base /home/nadeem/nana_project/nana_ws/build/nana_core/build install --record /home/nadeem/nana_project/nana_ws/build/nana_core/install.log --single-version-externally-managed install_data
+[0.590s] running egg_info
+[0.598s] writing ../../build/nana_core/nana_core.egg-info/PKG-INFO
+[0.598s] writing dependency_links to ../../build/nana_core/nana_core.egg-info/dependency_links.txt
+[0.599s] writing entry points to ../../build/nana_core/nana_core.egg-info/entry_points.txt
+[0.599s] writing requirements to ../../build/nana_core/nana_core.egg-info/requires.txt
+[0.599s] writing top-level names to ../../build/nana_core/nana_core.egg-info/top_level.txt
+[0.618s] reading manifest file '../../build/nana_core/nana_core.egg-info/SOURCES.txt'
+[0.618s] writing manifest file '../../build/nana_core/nana_core.egg-info/SOURCES.txt'
+[0.619s] running build
+[0.619s] running build_py
+[0.619s] running install
+[0.622s] running install_lib
+[0.631s] running install_data
+[0.632s] running install_egg_info
+[0.642s] removing '/home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core-0.0.0-py3.12.egg-info' (and everything under it)
+[0.642s] Copying ../../build/nana_core/nana_core.egg-info to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core-0.0.0-py3.12.egg-info
+[0.643s] running install_scripts
+[0.717s] Installing armrpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.717s] Installing driverpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.717s] Installing griprpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.717s] Installing joystick_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.717s] Installing mahorpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.718s] writing list of installed files to '/home/nadeem/nana_project/nana_ws/build/nana_core/install.log'
+[0.735s] Invoked command in '/home/nadeem/nana_project/nana_ws/src/nana_core' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/nadeem/nana_project/nana_ws/build/nana_core/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/nana_core build --build-base /home/nadeem/nana_project/nana_ws/build/nana_core/build install --record /home/nadeem/nana_project/nana_ws/build/nana_core/install.log --single-version-externally-managed install_data

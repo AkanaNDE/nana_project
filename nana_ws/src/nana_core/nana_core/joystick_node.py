@@ -79,6 +79,11 @@ class Joystick(Node):
             Twist, "/nana/cmd_maho", qos_profile=qos.qos_profile_system_default
 )
         
+        self.pub_grip = self.create_publisher(
+            Twist, "/nana/cmd_grip", qos_profile=qos.qos_profile_system_default
+)
+
+
         self.create_subscription(
             Joy, '/nana/joy', self.joy, qos_profile=qos.qos_profile_sensor_data # 10
         )
@@ -130,6 +135,7 @@ class Joystick(Node):
         cmd_vel_move = Twist()
         cmd_Arm = Twist()
         cmd_maho = Twist()
+        cmd_grip = Twist()
 
         cmd_Arm.linear.y = float(self.gamepad.r2 * self.maxspeed)
         cmd_Arm.angular.z = float(self.gamepad.l2 * self.maxspeed)
@@ -139,10 +145,14 @@ class Joystick(Node):
 
         cmd_maho.linear.y = float(self.gamepad.r1)
         cmd_maho.angular.z = float(self.gamepad.l1)
+
+        cmd_grip.linear.y = float(self.gamepad.button_cross)
+        cmd_grip.angular.z = float(self.gamepad.button_circle)
         
         self.pub_move.publish(cmd_vel_move)
         self.pub_arm.publish(cmd_Arm)
         self.pub_maho.publish(cmd_maho)
+        self.pub_grip.publish(cmd_grip)
 
 
 

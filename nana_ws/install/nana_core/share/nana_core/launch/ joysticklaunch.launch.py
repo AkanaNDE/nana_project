@@ -52,8 +52,13 @@ def generate_launch_description():
         executable="mahorpm_node",
         name="Maho_Node",
         namespace="",
+    )
 
-
+    maho_node = Node(
+        package="nana_core",
+        executable="griprpm_node",
+        name="Grip_Node",
+        namespace="",
     )
 
     # node_microros_1 = Node(

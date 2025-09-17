@@ -341,19 +341,5 @@ struct timespec getTime()
 
 void rclErrorLoop()
 {
-    // Example implementation: blink LED rapidly then reboot or halt
-
-    const int LED_PIN = 13;
-    pinMode(LED_PIN, OUTPUT);
-
-    while (1)
-    {
-        digitalWrite(LED_PIN, HIGH);
-        delay(100);
-        digitalWrite(LED_PIN, LOW);
-        delay(100);
-    }
-
-    // Or, if you want to reboot:
-    // NVIC_SystemReset();  // if supported on your platform
+    ESP.restart
 }
