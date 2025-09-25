@@ -272,8 +272,8 @@ void Move(){
 
     float max_rpm = 150.0;
 
-uint8_t duty1 = (uint8_t)((fabs(motor1Speed) / max_rpm) * 255.0);
-uint8_t duty2 = (uint8_t)((fabs(motor2Speed) / max_rpm) * 255.0);
+    uint8_t duty1 = (uint8_t)((fabs(motor1Speed) / max_rpm) * 255.0);
+    uint8_t duty2 = (uint8_t)((fabs(motor2Speed) / max_rpm) * 255.0);
 
 
     // Motor A control

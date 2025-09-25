@@ -66,8 +66,8 @@ class Drive_node(Node):
         angular_vel = angular_vel * 5
 
         # Compute left and right wheel speeds (in m/s)
-        v_left = linear_vel - (angular_vel * self.wheel_base )
-        v_right = linear_vel + (angular_vel * self.wheel_base)
+        v_left = linear_vel + (angular_vel * self.wheel_base )
+        v_right = linear_vel - (angular_vel * self.wheel_base)
 
         # Convert to motor speeds in RPM (optional)
         rpm_left = float(v_left * self.maxRPM)

@@ -18,7 +18,7 @@ class Arm_node(Node):
 
     def __init__(self):
         super().__init__("Arm_node")
-        self.maxRPM : int = 150
+        self.maxRPM : int = 1000
         self.motor1Speed : float = 0
 
         self.send_robot_speed = self.create_publisher(
