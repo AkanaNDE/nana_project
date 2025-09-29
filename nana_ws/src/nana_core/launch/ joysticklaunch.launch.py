@@ -54,7 +54,7 @@ def generate_launch_description():
         namespace="",
     )
 
-    maho_node = Node(
+    grip_node = Node(
         package="nana_core",
         executable="griprpm_node",
         name="Grip_Node",
@@ -75,6 +75,7 @@ def generate_launch_description():
     ld.add_action(drive_node)
     ld.add_action(arm_node)
     ld.add_action(maho_node)
+    ld.add_action(grip_node)
 
 
     return ld

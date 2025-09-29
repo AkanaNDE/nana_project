@@ -3,7 +3,7 @@
 
 Servo myServo;
 
-const int servoPin = 18;  // Connect your servo signal wire here
+const int servoPin = 27;  // Connect your servo signal wire here
 
 void setup() {
   Serial.begin(115200);

@@ -178,8 +178,11 @@ void controlCallback(rcl_timer_t *timer, int64_t last_call_time)
 
 void twistCallback(const void *msgin)
 {
+    const geometry_msgs__msg__Twist *msg = (const geometry_msgs__msg__Twist *)msgin;
+    motor_msg = *msg;  // Copy the message content
     prev_cmd_time = millis();
 }
+
 
 
 
@@ -252,13 +255,18 @@ bool destroyEntities()
     (void)rmw_uros_set_context_entity_destroy_session_timeout(rmw_context, 0);
 
     rcl_publisher_fini(&debug_motor_publisher, &node);
-    rcl_node_fini(&node);
+    rcl_subscription_fini(&motor_subscriber, &node);  // <--- ADD THIS
     rcl_timer_fini(&control_timer);
     rclc_executor_fini(&executor);
+    rcl_node_fini(&node);
     rclc_support_fini(&support);
+
+    geometry_msgs__msg__Twist__fini(&motor_msg);      // <--- CLEANUP
+    geometry_msgs__msg__Twist__fini(&debug_motor_msg);
 
     return true;
 }
+
 
 
 
@@ -341,5 +349,5 @@ struct timespec getTime()
 
 void rclErrorLoop()
 {
-    ESP.restart
+    ESP.restart();
 }

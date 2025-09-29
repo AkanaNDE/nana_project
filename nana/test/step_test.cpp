@@ -3,6 +3,7 @@
 // === Pin Definitions ===
 const int STEP_PIN = 22;     // Step signal
 const int DIR_PIN = 13;      // Direction signal
+
 const int ENABLE_PIN = 21; // Optional: Uncomment if using an enable pin
 
 // === Stepper Configuration ===
