@@ -61,20 +61,20 @@ class Drive_node(Node):
 
     def cmd_vel(self, msg):
 
-        linear_vel = msg.linear.y   # forward/backward
-        angular_vel = msg.angular.z # turning rate
+        linear_vel = msg.angular.z   # forward/backward
+        angular_vel = msg.linear.y * -1 # turning rate
         angular_vel = angular_vel * 5
 
         # Compute left and right wheel speeds (in m/s)
         v_left = linear_vel + (angular_vel * self.wheel_base )
-        v_right = linear_vel - (angular_vel * self.wheel_base)
+        v_right = linear_vel - (angular_vel * self.wheel_base) 
 
         # Convert to motor speeds in RPM (optional)
         rpm_left = float(v_left * self.maxRPM)
         rpm_right = float(v_right * self.maxRPM)
 
         # Store or send these speeds to motor controller
-        self.motor1Speed = rpm_left
+        self.motor1Speed = rpm_left 
         self.motor2Speed = rpm_right
 
         print(f"Left Motor: {self.motor1Speed:.2f} RPM, Right Motor: {self.motor2Speed:.2f} RPM")

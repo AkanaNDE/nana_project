@@ -4,10 +4,10 @@
 #define A11 25
 #define A12 26
 #define B11 14
-#define B12 12
+#define B12 33
 
 #define ENCODER_A 32
-#define ENCODER_B 33
+#define ENCODER_B 12
 
 volatile long encoderCount = 0;
 

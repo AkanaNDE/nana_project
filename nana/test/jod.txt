@@ -1,0 +1,41 @@
+pi 5
+ssh nnn@nnn.local
+pass :  (1spacebar) 
+
+launch joy
+ros2 launch nana_core \ joysticklaunch.launch.py
+
+run microros
+ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0 -b 460800
+
+topic
+/nana/cmd_arm
+/nana/cmd_arm/rpm
+/nana/cmd_grip
+/nana/cmd_grip/rpm
+/nana/cmd_maho
+/nana/cmd_maho/rpm
+/nana/cmd_move
+/nana/cmd_move/rpm
+/nana/debug/cmd_arm/rpm
+/nana/debug/cmd_grip/rpm
+/nana/debug/cmd_maho/rpm
+/nana/debug/cmd_move/rpm
+/nana/joy
+
+check topic and node
+rqt_graph
+
+camera
+sudo fuser -k /dev/video0( port video maybe change )
+sudo fuser -v /dev/video0
+mjpg_streamer -i "input_uvc.so -d /dev/video2 -r 1920x1080 -f 15"               -o "output_http.so -p 8080 -w ./www"
+
+check ip
+hostname -I
+
+check esp32 driver connect
+sudo dmesg | grep ttyUSB
+
+check USB port
+ls /dev/ttyUSB*
