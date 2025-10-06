@@ -24,9 +24,9 @@ void rclErrorLoop();
 // ===== Pins =====
 #define STEP_PIN1 22
 #define DIR_PIN1  13
-#define STEP_PIN2 19
-#define DIR_PIN2  12
-#define ENABLE_PIN 21   // DRV8825 EN active-low
+#define STEP_PIN2 25
+#define DIR_PIN2  16
+// (EN ถูกถอดออกจากโค้ดนี้เพื่อโฟกัสที่อาการ session closed; ถ้าจะใช้ให้เลือก GPIO ปลอดภัยเช่น 21/16/17/25/26/27/32/33)
 
 // ===== Stepper settings (ทอร์คสูงขึ้นด้วยสปีดต่ำลง) =====
 static const int   STEPS_PER_REV = 200;
@@ -48,7 +48,8 @@ static const uint32_t S2_DEFAULT_INTERVAL  = 1200;
 // Timing / Agent
 static const uint32_t CONTROL_PERIOD_MS    = 20;
 static const uint32_t COMMAND_KEEPALIVE_MS = 3000;
-static const uint32_t AGENT_DISCONNECT_GRACE_MS = 10000;
+// ขยาย grace 10s -> 30s กัน false disconnect
+static const uint32_t AGENT_DISCONNECT_GRACE_MS = 30000;
 
 // ===== ROS entities =====
 rcl_publisher_t debug_motor_publisher, maho_debug_publisher, grip_debug_publisher;
@@ -247,7 +248,7 @@ bool createEntities(){
   RCCHECK(rclc_timer_init_default(&control_timer,&support,RCL_MS_TO_NS(CONTROL_PERIOD_MS),controlCallback));
 
   executor = rclc_executor_get_zero_initialized_executor();
-  RCCHECK(rclc_executor_init(&executor,&support.context,5,&allocator));
+  RCCHECK(rclc_executor_init(&executor,&support.context,7,&allocator));
   RCCHECK(rclc_executor_add_subscription(&executor,&motor_subscriber,&motor_msg,&twistCallback,ON_NEW_DATA));
   RCCHECK(rclc_executor_add_subscription(&executor,&maho_subscriber,&maho_msg,&mahoCallback,ON_NEW_DATA));
   RCCHECK(rclc_executor_add_subscription(&executor,&grip_subscriber,&grip_msg,&gripCallback,ON_NEW_DATA));
@@ -284,7 +285,8 @@ bool destroyEntities(){
 void rclErrorLoop(){ while(1){ delay(150);} }
 
 void setup(){
-  Serial.begin(115200);
+  // ปรับ baud สูงขึ้นให้ลื่นขึ้น แต่ยังไม่สุดเพื่อความเข้ากันได้กับสาย/อะแดปเตอร์หลายรุ่น
+  Serial.begin(460800);                       // <-- ต้องตั้ง agent -b 500000 ให้ตรง
   Serial.setRxBufferSize(2048);
   Serial.setTxBufferSize(2048);
   delay(50);
@@ -292,7 +294,6 @@ void setup(){
 
   pinMode(STEP_PIN1,OUTPUT); pinMode(DIR_PIN1,OUTPUT);
   pinMode(STEP_PIN2,OUTPUT); pinMode(DIR_PIN2,OUTPUT);
-  pinMode(ENABLE_PIN,OUTPUT); digitalWrite(ENABLE_PIN,LOW);
   gpio_set_level((gpio_num_t)STEP_PIN1,0); gpio_set_level((gpio_num_t)DIR_PIN1,0);
   gpio_set_level((gpio_num_t)STEP_PIN2,0); gpio_set_level((gpio_num_t)DIR_PIN2,0);
 
@@ -310,16 +311,31 @@ void loop(){
   uint32_t now = millis();
   switch(state){
     case WAITING_AGENT:
-      EXECUTE_EVERY_N_MS(500, { if (RMW_RET_OK==rmw_uros_ping_agent(100,1)) { state=AGENT_AVAILABLE; last_agent_ok_ms=now; } });
+      // เพิ่ม timeout เป็น 1000 ms และลอง 3 ครั้ง เพื่อลด false negative
+      EXECUTE_EVERY_N_MS(500, {
+        if (RMW_RET_OK == rmw_uros_ping_agent(1000, 3)) {
+          state = AGENT_AVAILABLE; last_agent_ok_ms = now;
+        }
+      });
       break;
+
     case AGENT_AVAILABLE:
       state = createEntities()?AGENT_CONNECTED:WAITING_AGENT;
       break;
+
     case AGENT_CONNECTED:{
       rclc_executor_spin_some(&executor, RCL_MS_TO_NS(2));
-      EXECUTE_EVERY_N_MS(3000, { if (RMW_RET_OK==rmw_uros_ping_agent(200,1)) last_agent_ok_ms=millis(); });
-      if (millis()-last_agent_ok_ms > AGENT_DISCONNECT_GRACE_MS) state = AGENT_DISCONNECTED;
+      // ขยายหน้าต่าง ping: timeout 1000 ms, ลอง 3 ครั้ง ทุก 3 วินาที
+      EXECUTE_EVERY_N_MS(3000, {
+        if (RMW_RET_OK == rmw_uros_ping_agent(1000, 3)) {
+          last_agent_ok_ms = millis();
+        }
+      });
+      if (millis() - last_agent_ok_ms > AGENT_DISCONNECT_GRACE_MS) {
+        state = AGENT_DISCONNECTED;
+      }
     } break;
+
     case AGENT_DISCONNECTED:
       destroyEntities();
       s1_held=false; applyRPM(0);
