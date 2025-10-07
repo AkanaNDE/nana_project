@@ -194,7 +194,7 @@ static volatile float servo_current_deg=180, servo_target_deg=180; static volati
 static inline uint32_t usToDuty(uint32_t us){ const uint32_t period_us=1000000UL/SERVO_FREQ_HZ, max_duty=(1UL<<SERVO_RES_BITS)-1; if(us<SERVO_MIN_US)us=SERVO_MIN_US; if(us>SERVO_MAX_US)us=SERVO_MAX_US; return (uint32_t)((uint64_t)us*max_duty/period_us); }
 static inline uint32_t angleToUs(float d){ d=clampf(d,0,180); return (uint32_t)(SERVO_MIN_US + (SERVO_MAX_US-SERVO_MIN_US)*(d/180.0f) + 0.5f); }
 static inline void servoWriteDeg(float d){ ledcWrite(SERVO_LEDC_CH, usToDuty(angleToUs(d))); }
-static inline void servoSetTargetFromCmd(int cmd){ if(cmd>0) servo_target_deg=180; else if(cmd<0) servo_target_deg=130; else return; servo_reached=false; }
+static inline void servoSetTargetFromCmd(int cmd){ if(cmd>0) servo_target_deg=175; else if(cmd<0) servo_target_deg=130; else return; servo_reached=false; }
 static inline void servoUpdateAndPublish(){ float c=servo_current_deg,t=servo_target_deg; if(fabsf(t-c)<=SERVO_SLEW_DEG_PER_TICK){ c=t; servo_reached=true; } else { c += (t>c?SERVO_SLEW_DEG_PER_TICK:-SERVO_SLEW_DEG_PER_TICK); } servo_current_deg=clampf(c,0,180); servoWriteDeg(servo_current_deg); grip_debug_msg.linear.x=servo_current_deg; grip_debug_msg.linear.y=servo_target_deg; grip_debug_msg.angular.z=servo_reached?1.0f:0.0f; RCSOFTCHECK(rcl_publish(&grip_debug_publisher,&grip_debug_msg,NULL)); }
 
 // ===== Control Timer (ฝั่ง Stepper/Servo) =====
