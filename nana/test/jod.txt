@@ -27,7 +27,7 @@ check topic and node
 rqt_graph
 
 camera
-sudo fuser -k /dev/video0( port video maybe change )
+sudo fuser -k /dev/video0 //( port video maybe change )
 sudo fuser -v /dev/video0
 mjpg_streamer -i "input_uvc.so -d /dev/video2 -r 1920x1080 -f 15"               -o "output_http.so -p 8080 -w ./www"
 

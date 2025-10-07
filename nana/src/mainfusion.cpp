@@ -24,7 +24,7 @@
 // ===== Pins (ปรับให้ไม่ชนกับ DC) =====
 #define STEP_PIN1 22
 #define DIR_PIN1  13
-#define STEP_PIN2 21   // เดิม 25 -> ย้ายเพื่อไม่ชน DC AIN1
+#define STEP_PIN2 21
 #define DIR_PIN2  16
 
 // ===== Stepper settings =====
@@ -52,7 +52,7 @@ static const uint32_t CONTROL_PERIOD_MS    = 20;
 static const uint32_t COMMAND_KEEPALIVE_MS = 3000;
 static const uint32_t AGENT_DISCONNECT_GRACE_MS = 30000;
 
-// ===== ROS entities (จากโค้ดที่ 1) =====
+// ===== ROS entities =====
 rcl_publisher_t debug_motor_publisher, maho_debug_publisher, grip_debug_publisher;
 geometry_msgs__msg__Twist debug_motor_msg, maho_debug_msg, grip_debug_msg;
 
@@ -80,8 +80,8 @@ volatile bool     is_running=false, step_high_phase=false, dir_is_cw=true, need_
 volatile uint32_t current_interval_us=1000, target_interval_us=1000, pulse_us=STEP_PULSE_US;
 
 // โหมด hold-to-run
-static volatile bool  s1_held = false;       // กด/ถืออยู่ไหม
-static volatile int   s1_dir  = +1;          // +1/-1
+static volatile bool  s1_held = false;
+static volatile int   s1_dir  = +1;
 static volatile uint32_t last_cmd_ms = 0;
 
 // ===== Timer ISR (Stepper #1) =====
@@ -197,79 +197,53 @@ static inline void servoWriteDeg(float d){ ledcWrite(SERVO_LEDC_CH, usToDuty(ang
 static inline void servoSetTargetFromCmd(int cmd){ if(cmd>0) servo_target_deg=175; else if(cmd<0) servo_target_deg=130; else return; servo_reached=false; }
 static inline void servoUpdateAndPublish(){ float c=servo_current_deg,t=servo_target_deg; if(fabsf(t-c)<=SERVO_SLEW_DEG_PER_TICK){ c=t; servo_reached=true; } else { c += (t>c?SERVO_SLEW_DEG_PER_TICK:-SERVO_SLEW_DEG_PER_TICK); } servo_current_deg=clampf(c,0,180); servoWriteDeg(servo_current_deg); grip_debug_msg.linear.x=servo_current_deg; grip_debug_msg.linear.y=servo_target_deg; grip_debug_msg.angular.z=servo_reached?1.0f:0.0f; RCSOFTCHECK(rcl_publish(&grip_debug_publisher,&grip_debug_msg,NULL)); }
 
-
 // ========================== [DRILL SERVO - ADD] ==========================
-// ใช้ LEDC อีกช่องหนึ่งสำหรับเซอร์โวแบบ 360° (MG90S)
 #define DRILL_SERVO_PIN        23
-#define DRILL_SERVO_LEDC_CH    5       // หลีกเลี่ยงชน: 0-3 ใช้ DC, 4 ใช้ SERVO เดิม
+#define DRILL_SERVO_LEDC_CH    5
 #define DRILL_SERVO_FREQ_HZ    50
 #define DRILL_SERVO_RES_BITS   16
 
-// ค่าพัลส์สำหรับ Continuous Rotation (ปรับจูนได้)
-#define DRILL_US_STOP          1500    // กลาง = หยุด
-#define DRILL_US_RUN           1800    // >1500 หมุนทิศทางหนึ่ง (ตามเข็ม); <1500 ทวนเข็ม
+#define DRILL_US_STOP          1500
+#define DRILL_US_RUN           1800
 
-// สถานะการทำงานแบบ toggle-on-press
-static volatile bool drill_run = false;     // true = หมุนต่อเนื่อง, false = หยุด
-static bool drill_prev_y_is_one = false;    // edge detector ของ linear.y==1
+static volatile bool drill_run = false;
+static bool drill_prev_y_is_one = false;
 
-// ROS entities ของ drill
 rcl_publisher_t       drill_debug_publisher;
 geometry_msgs__msg__Twist drill_debug_msg;
 
 rcl_subscription_t    drill_subscriber;
 geometry_msgs__msg__Twist drill_msg;
 
-// ฟังก์ชัน util: ใช้ตัวแปลง us->duty จากบล็อก SERVO เดิม (usToDuty)
-// (ประกาศ usToDuty อยู่แล้วด้านบนในบล็อก SERVO เดิม)
-
-// เขียนพัลส์ให้เซอร์โว drill
 static inline void drillServoWriteUs(uint32_t us){
-  // จำกัดช่วง 500–2500us เช่นเดียวกับเซอร์โวเดิม เพื่อความปลอดภัย
   if(us < SERVO_MIN_US) us = SERVO_MIN_US;
   if(us > SERVO_MAX_US) us = SERVO_MAX_US;
   ledcWrite(DRILL_SERVO_LEDC_CH, usToDuty(us));
 }
 
-// อัปเดตเซอร์โว drill + publish debug
 static inline void drillUpdateAndPublish(){
-  // ถ้า drill_run = true → จ่ายพัลส์ให้หมุนคงที่, ถ้า false → หยุด
   drillServoWriteUs(drill_run ? DRILL_US_RUN : DRILL_US_STOP);
-
-  // Debug: linear.x = 1/0 (run/stop), angular.x = us ที่สั่ง
   drill_debug_msg.linear.x  = drill_run ? 1.0f : 0.0f;
   drill_debug_msg.angular.x = drill_run ? (float)DRILL_US_RUN : (float)DRILL_US_STOP;
   RCSOFTCHECK(rcl_publish(&drill_debug_publisher, &drill_debug_msg, NULL));
 }
 
-// Callback: รับ /nana/cmd_drill (Twist)
-// ต้องการ logic: เมื่อมี "1" ที่ linear.y (กด 1 ครั้ง) → toggle run/stop
-// การกดอีกครั้ง (linear.y==1 อีกครั้ง) → toggle กลับ
 void drillCallback(const void* msgin){
   const auto* msg = (const geometry_msgs__msg__Twist*)msgin;
-
-  // ตรวจเฉพาะ linear.y == 1
   bool is_one = (fabsf(msg->linear.y - 1.0f) < 0.5f);
-
-  // rising edge: 0 -> 1 เท่านั้นจึง toggle
   if(is_one && !drill_prev_y_is_one){
-    drill_run = !drill_run;  // toggle run/stop
+    drill_run = !drill_run;
   }
   drill_prev_y_is_one = is_one;
-
-  // เก็บค่าเดบักเพิ่มเติม (เช่น คำสั่งล่าสุด)
   drill_debug_msg.linear.y = msg->linear.y;
 }
 
-// ===== Control Timer (ฝั่ง Stepper/Servo) =====
-void Move(){ // โหมด hold-to-run
-  if(s1_held) applyRPM((float)s1_dir * FIXED_RPM_1);
-  else        applyRPM(0.0f);
-}
+// ===== Control Timer =====
+void Move(){ if(s1_held) applyRPM((float)s1_dir * FIXED_RPM_1); else applyRPM(0.0f); }
 void publishData(){ RCSOFTCHECK(rcl_publish(&debug_motor_publisher,&debug_motor_msg,NULL)); }
 
-// ===== Callbacks (ฝั่ง Stepper/Servo) =====
-void twistCallback(const void* msgin){ // /nana/cmd_arm/rpm
+// ===== Callbacks =====
+void twistCallback(const void* msgin){
   const auto* msg = (const geometry_msgs__msg__Twist*)msgin;
   float v = msg->linear.x;
   last_cmd_ms = millis();
@@ -280,36 +254,26 @@ void twistCallback(const void* msgin){ // /nana/cmd_arm/rpm
 
 void mahoCallback(const void* msgin){
   const auto* msg = (const geometry_msgs__msg__Twist*)msgin;
-
-  // ความหมาย:
-  // linear.x = ทิศทางกด  (-1, 0, +1)   => 0 = ไม่กด, ±1 = กด
-  // linear.y = องศาที่จะหมุน (ถ้า 0 จะใช้ S2_DEFAULT_DEGREES)
-  // angular.x = interval_us (ถ้า <=0 จะใช้ S2_DEFAULT_INTERVAL)
-
   int dir = (int)msg->linear.x;
   float deg = (msg->linear.y != 0.0f) ? (float)msg->linear.y : S2_DEFAULT_DEGREES;
   uint32_t use_us = (msg->angular.x > 0.0f) ? (uint32_t)msg->angular.x : S2_DEFAULT_INTERVAL;
 
-  // กดอยู่ไหม (ถือว่า nonzero = กด)
   bool pressed = (dir == 1 || dir == -1);
   uint32_t now = millis();
 
-  // ดีบาวน์ + edge-trigger: "ไม่เคยกด → กด" เท่านั้นที่ยิงคำสั่ง
   if (pressed && !s2_prev_pressed && (now - s2_last_trigger_ms >= S2_DEBOUNCE_MS)) {
-    // ถ้าอยากให้ไม่รับกดซ้ำระหว่างกำลังวิ่ง ก็ปล่อยไว้แบบนี้
-    // (สั่งรอบเดียว ไม่สนใจว่าจะยังค้างกดอยู่)
     startStepper2Degrees(deg, dir, use_us);
     s2_last_trigger_ms = now;
   }
-
-  // อัปเดตสถานะเพื่อรอรอบต่อไป (ต้อง "ปล่อย" ก่อน จึงจะกดครั้งใหม่ติด)
   s2_prev_pressed = pressed;
 }
 
-void gripCallback(const void* msgin){ const auto* msg=(const geometry_msgs__msg__Twist*)msgin; int cmd=(int)msg->linear.x; if(cmd==1||cmd==-1) servoSetTargetFromCmd(cmd); }
+void gripCallback(const void* msgin){
+  const auto* msg=(const geometry_msgs__msg__Twist*)msgin;
+  int cmd=(int)msg->linear.x; if(cmd==1||cmd==-1) servoSetTargetFromCmd(cmd);
+}
 
-// ========================== โค้ดที่ 2: DC Motor 4 ช่อง (ผสาน) ==========================
-// ขา PWM (ไม่ทับกับสเต็ปเปอร์/เซอร์โว)
+// ========================== โค้ดที่ 2: DC Motor 4 ช่อง ==========================
 #define AIN1 25
 #define AIN2 26
 #define BIN1 14
@@ -322,14 +286,12 @@ void gripCallback(const void* msgin){ const auto* msg=(const geometry_msgs__msg_
 #define PWM_CHANNEL_BIN1 2
 #define PWM_CHANNEL_BIN2 3
 
-// Entities เพิ่มเติม (ของโค้ดที่ 2)
 rcl_publisher_t debug_motor_publisher_move;
 geometry_msgs__msg__Twist debug_motor_msg_move;
 
 rcl_subscription_t motor_subscriber_move;
 geometry_msgs__msg__Twist motor_msg_move;
 
-// ฟังก์ชันฝั่ง DC (คงตรรกะเดิม)
 void MoveDC(){
   float motor1Speed = motor_msg_move.linear.x;
   float motor2Speed = motor_msg_move.linear.y;
@@ -339,7 +301,6 @@ void MoveDC(){
   uint8_t duty1 = (uint8_t)((fabs(motor1Speed) / max_rpm) * 255.0);
   uint8_t duty2 = (uint8_t)((fabs(motor2Speed) / max_rpm) * 255.0);
 
-  // Motor A control
   if (motor1Speed > 0) {
       ledcWrite(PWM_CHANNEL_AIN1, duty1);
       ledcWrite(PWM_CHANNEL_AIN2, 0);
@@ -351,7 +312,6 @@ void MoveDC(){
       ledcWrite(PWM_CHANNEL_AIN2, 0);
   }
 
-  // Motor B control
   if (motor2Speed > 0) {
       ledcWrite(PWM_CHANNEL_BIN1, duty2);
       ledcWrite(PWM_CHANNEL_BIN2, 0);
@@ -368,23 +328,14 @@ void MoveDC(){
 }
 
 void publishDataDC(){
-  // พิมพ์ดีบักแบบเดิม
-  Serial.print("Publishing debug_motor_msg_move: ");
-  Serial.print(debug_motor_msg_move.linear.x);
-  Serial.print(", ");
-  Serial.println(debug_motor_msg_move.linear.y);
-
+  // ลบ Serial.print ทั้งหมดออก (เหลือแค่ publish)
   rcl_ret_t ret = rcl_publish(&debug_motor_publisher_move, &debug_motor_msg_move, NULL);
-  if (ret != RCL_RET_OK) {
-      Serial.print("Publish failed (move) with error: ");
-      Serial.println(rcl_get_error_string().str);
-      rcl_reset_error();
-  }
+  (void)ret; // ไม่ log อะไรบน Serial เพื่อไม่ให้ชน transport
 }
 
 void twistCallbackMove(const void* msgin){
   const auto* msg = (const geometry_msgs__msg__Twist*)msgin;
-  motor_msg_move = *msg;  // copy
+  motor_msg_move = *msg;
 }
 
 // ========================== สร้าง/ทำลายเอนทิตีรวม ==========================
@@ -397,11 +348,9 @@ bool createEntities(){
   geometry_msgs__msg__Twist__init(&motor_msg);
   geometry_msgs__msg__Twist__init(&maho_msg);
   geometry_msgs__msg__Twist__init(&grip_msg);
-  // --- [ADD] init msg ของ drill ---
   geometry_msgs__msg__Twist__init(&drill_msg);
   geometry_msgs__msg__Twist__init(&drill_debug_msg);
 
-  // สำหรับ DC (โค้ดที่ 2)
   geometry_msgs__msg__Twist__init(&motor_msg_move);
   geometry_msgs__msg__Twist__init(&debug_motor_msg_move);
 
@@ -411,36 +360,25 @@ bool createEntities(){
   RCCHECK(rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator));
   RCCHECK(rclc_node_init_default(&node, "esp32_dual_stepper_dc_node", "", &support));
 
-  // Publishers (เดิม)
+  // Publishers
   RCCHECK(rclc_publisher_init_best_effort(&debug_motor_publisher,&node,ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs,msg,Twist),"/nana/debug/cmd_arm/rpm"));
   RCCHECK(rclc_publisher_init_best_effort(&maho_debug_publisher,&node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs,msg,Twist),"/nana/debug/cmd_maho/rpm"));
   RCCHECK(rclc_publisher_init_best_effort(&grip_debug_publisher,&node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs,msg,Twist),"/nana/debug/cmd_grip/rpm"));
-  // --- [ADD] Publishers/Subscribers ของ drill ---
-  RCCHECK(rclc_publisher_init_best_effort(
-    &drill_debug_publisher, &node,
-    ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
-    "/nana/debug/cmd_drill"
-  ));
 
-  // Subscribers (เดิม)
+  RCCHECK(rclc_publisher_init_best_effort(&drill_debug_publisher,&node, ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),"/nana/debug/cmd_drill"));
+
+  RCCHECK(rclc_publisher_init_best_effort(&debug_motor_publisher_move,&node,ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs,msg,Twist),"/nana/debug/cmd_move/rpm"));
+
+  // Subscribers
   RCCHECK(rclc_subscription_init_default(&motor_subscriber,&node,ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs,msg,Twist),"/nana/cmd_arm/rpm"));
   RCCHECK(rclc_subscription_init_default(&maho_subscriber,&node,ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs,msg,Twist),"/nana/cmd_maho/rpm"));
   RCCHECK(rclc_subscription_init_default(&grip_subscriber,&node,ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs,msg,Twist),"/nana/cmd_grip/rpm"));
-  RCCHECK(rclc_subscription_init_default(
-    &drill_subscriber, &node,
-    ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
-    "/nana/cmd_drill"
-  ));
-
-  // เพิ่มของโค้ดที่ 2 (DC move)
-  RCCHECK(rclc_publisher_init_best_effort(&debug_motor_publisher_move,&node,ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs,msg,Twist),"/nana/debug/cmd_move/rpm"));
+  RCCHECK(rclc_subscription_init_default(&drill_subscriber,&node,ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),"/nana/cmd_drill"));
   RCCHECK(rclc_subscription_init_default(&motor_subscriber_move,&node,ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs,msg,Twist),"/nana/cmd_move/rpm"));
-  
 
   // Timer รวม
   RCCHECK(rclc_timer_init_default(&control_timer,&support,RCL_MS_TO_NS(CONTROL_PERIOD_MS),
     [](rcl_timer_t*, int64_t){
-      // ฝั่งสเต็ปเปอร์/เซอร์โว (โค้ดที่ 1)
       if((millis()-last_cmd_ms) > COMMAND_KEEPALIVE_MS) s1_held=false;
       Move();
       publishData();
@@ -452,10 +390,8 @@ bool createEntities(){
         portEXIT_CRITICAL(&timerMux2);
         publishMahoDebug(cw?+1:-1,0,deg,true);
       }
-      // ฝั่ง DC (โค้ดที่ 2)
       MoveDC();
       publishDataDC();
-
       drillUpdateAndPublish();
     }
   ));
@@ -466,14 +402,8 @@ bool createEntities(){
   RCCHECK(rclc_executor_add_subscription(&executor,&motor_subscriber,&motor_msg,&twistCallback,ON_NEW_DATA));
   RCCHECK(rclc_executor_add_subscription(&executor,&maho_subscriber,&maho_msg,&mahoCallback,ON_NEW_DATA));
   RCCHECK(rclc_executor_add_subscription(&executor,&grip_subscriber,&grip_msg,&gripCallback,ON_NEW_DATA));
-    // --- [ADD] executor add subscription ของ drill ---
-  RCCHECK(rclc_executor_add_subscription(
-    &executor, &drill_subscriber, &drill_msg, &drillCallback, ON_NEW_DATA
-  ));
-
-  // เพิ่ม subscription ของโค้ดที่ 2
+  RCCHECK(rclc_executor_add_subscription(&executor,&drill_subscriber,&drill_msg,&drillCallback,ON_NEW_DATA));
   RCCHECK(rclc_executor_add_subscription(&executor,&motor_subscriber_move,&motor_msg_move,&twistCallbackMove,ON_NEW_DATA));
-
   RCCHECK(rclc_executor_add_timer(&executor,&control_timer));
 
   s1_held=false; s1_dir=+1; last_cmd_ms=0;
@@ -485,7 +415,6 @@ bool destroyEntities(){
   rmw_context_t* rmw_context = rcl_context_get_rmw_context(&support.context);
   (void)rmw_uros_set_context_entity_destroy_session_timeout(rmw_context,0);
 
-  // pubs/subs (เดิม)
   RCSOFTCHECK(rcl_publisher_fini(&debug_motor_publisher,&node));
   RCSOFTCHECK(rcl_publisher_fini(&maho_debug_publisher,&node));
   RCSOFTCHECK(rcl_publisher_fini(&grip_debug_publisher,&node));
@@ -494,8 +423,6 @@ bool destroyEntities(){
   RCSOFTCHECK(rcl_subscription_fini(&grip_subscriber,&node));
   RCSOFTCHECK(rcl_publisher_fini(&drill_debug_publisher, &node));
   RCSOFTCHECK(rcl_subscription_fini(&drill_subscriber, &node));
-
-  // pubs/subs (DC)
   RCSOFTCHECK(rcl_publisher_fini(&debug_motor_publisher_move,&node));
   RCSOFTCHECK(rcl_subscription_fini(&motor_subscriber_move,&node));
 
@@ -519,8 +446,8 @@ bool destroyEntities(){
 
 // ========================== Setup/Loop ==========================
 void setup(){
-  // Serial/micro-ROS
-  Serial.begin(460800);                 // ให้ตั้ง agent ด้วยความเร็วที่รองรับ เช่น -b 460800
+  // ใช้ Serial เฉพาะเป็น transport ของ micro-ROS เท่านั้น (ไม่พิมพ์ log ใด ๆ)
+  Serial.begin(460800);
   Serial.setRxBufferSize(2048);
   Serial.setTxBufferSize(2048);
   delay(50);
@@ -535,13 +462,11 @@ void setup(){
   // Servo
   ledcSetup(SERVO_LEDC_CH, SERVO_FREQ_HZ, SERVO_RES_BITS);
   ledcAttachPin(SERVO_PIN, SERVO_LEDC_CH);
-  // ตั้งไว้ที่ 0 หรือ 180 ตามต้องการเริ่มต้น
   servoWriteDeg(180);
 
-  // --- [ADD] DRILL SERVO PWM SETUP ---
+  // DRILL SERVO
   ledcSetup(DRILL_SERVO_LEDC_CH, DRILL_SERVO_FREQ_HZ, DRILL_SERVO_RES_BITS);
   ledcAttachPin(DRILL_SERVO_PIN, DRILL_SERVO_LEDC_CH);
-  // เริ่มต้นที่หยุดนิ่ง
   drillServoWriteUs(DRILL_US_STOP);
 
   // DC motor pins + PWM
