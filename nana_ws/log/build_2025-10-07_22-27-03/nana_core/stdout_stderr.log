@@ -1,0 +1,26 @@
+running egg_info
+writing ../../build/nana_core/nana_core.egg-info/PKG-INFO
+writing dependency_links to ../../build/nana_core/nana_core.egg-info/dependency_links.txt
+writing entry points to ../../build/nana_core/nana_core.egg-info/entry_points.txt
+writing requirements to ../../build/nana_core/nana_core.egg-info/requires.txt
+writing top-level names to ../../build/nana_core/nana_core.egg-info/top_level.txt
+reading manifest file '../../build/nana_core/nana_core.egg-info/SOURCES.txt'
+writing manifest file '../../build/nana_core/nana_core.egg-info/SOURCES.txt'
+running build
+running build_py
+copying nana_core/joystick_node.py -> /home/nadeem/nana_project/nana_ws/build/nana_core/build/lib/nana_core
+running install
+running install_lib
+copying /home/nadeem/nana_project/nana_ws/build/nana_core/build/lib/nana_core/joystick_node.py -> /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core
+byte-compiling /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/joystick_node.py to joystick_node.cpython-312.pyc
+running install_data
+running install_egg_info
+removing '/home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core-0.0.0-py3.12.egg-info' (and everything under it)
+Copying ../../build/nana_core/nana_core.egg-info to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core-0.0.0-py3.12.egg-info
+running install_scripts
+Installing armrpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+Installing driverpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+Installing griprpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+Installing joystick_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+Installing mahorpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+writing list of installed files to '/home/nadeem/nana_project/nana_ws/build/nana_core/install.log'
