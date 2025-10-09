@@ -74,8 +74,8 @@ class Drive_node(Node):
         rpm_right = float(v_right * self.maxRPM)
 
         # Store or send these speeds to motor controller
-        self.motor1Speed = rpm_left 
-        self.motor2Speed = rpm_right
+        self.motor1Speed = rpm_right 
+        self.motor2Speed = rpm_left
 
         print(f"Left Motor: {self.motor1Speed:.2f} RPM, Right Motor: {self.motor2Speed:.2f} RPM")
 

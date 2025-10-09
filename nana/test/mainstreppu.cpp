@@ -24,7 +24,7 @@ void rclErrorLoop();
 // ===== Pins =====
 #define STEP_PIN1 22
 #define DIR_PIN1  13
-#define STEP_PIN2 25
+#define STEP_PIN2 21
 #define DIR_PIN2  16
 // (EN ถูกถอดออกจากโค้ดนี้เพื่อโฟกัสที่อาการ session closed; ถ้าจะใช้ให้เลือก GPIO ปลอดภัยเช่น 21/16/17/25/26/27/32/33)
 
