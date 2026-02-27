@@ -2,7 +2,7 @@ import cv2
 from ultralytics import YOLO
 
 # Load the YOLO11 model
-model = YOLO("C:/CHANON/Project3/file/bestcab2.pt")
+model = YOLO("bestcab2.pt")
 
 # Open the video file / Webcam
 cap = cv2.VideoCapture(0)

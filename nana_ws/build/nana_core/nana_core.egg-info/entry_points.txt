@@ -1,4 +1,5 @@
 [console_scripts]
+apriltag_chanon = nana_core.apriltag_chanon:main
 armrpm_node = nana_core.armrpm_node:main
 driverpm_node = nana_core.driverpm_node:main
 griprpm_node = nana_core.griprpm_node:main

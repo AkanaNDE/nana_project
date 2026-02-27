@@ -14,7 +14,8 @@ setup(
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
     ],
-    install_requires=['setuptools'],
+    install_requires=['pupil-apriltags',
+                      'setuptools'],
     zip_safe=True,
     maintainer='nadeem',
     maintainer_email='nadeem@todo.todo',
@@ -28,6 +29,7 @@ setup(
             'armrpm_node = nana_core.armrpm_node:main',
             'mahorpm_node = nana_core.mahorpm_node:main',
             'griprpm_node = nana_core.griprpm_node:main',
+            'apriltag_chanon = nana_core.apriltag_chanon:main',
         ],
     },
 )

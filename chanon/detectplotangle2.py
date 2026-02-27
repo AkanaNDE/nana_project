@@ -4,7 +4,7 @@ from ultralytics import YOLO
 
 # --- ส่วนที่ 1: ตั้งค่าเริ่มต้น ---
 # เปลี่ยน path เป็นไฟล์ของคุณ
-model = YOLO("C:/CHANON/Project3/file/best4.pt") 
+model = YOLO("best4.pt") 
 cap = cv2.VideoCapture(2)
 
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)

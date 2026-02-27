@@ -1,1 +1,2 @@
+pupil-apriltags
 setuptools
