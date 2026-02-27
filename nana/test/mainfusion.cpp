@@ -14,7 +14,7 @@
 #include <geometry_msgs/msg/twist.h>
 #include "driver/gpio.h"
 
-// ===== Macros =====
+// ===== Macros =====-+
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if ((temp_rc != RCL_RET_OK)) rclErrorLoop(); }
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; (void)temp_rc; }
 #define EXECUTE_EVERY_N_MS(MS, X) do { static volatile int64_t t_ms = -1; if (t_ms == -1) t_ms = uxr_millis(); if ((int32_t)(uxr_millis() - t_ms) > (MS)) { X; t_ms = uxr_millis(); } } while (0)
@@ -183,7 +183,7 @@ static volatile float servo_current_deg=180, servo_target_deg=180; static volati
 static inline uint32_t usToDuty(uint32_t us){ const uint32_t period_us=1000000UL/SERVO_FREQ_HZ, max_duty=(1UL<<SERVO_RES_BITS)-1; if(us<SERVO_MIN_US)us=SERVO_MIN_US; if(us>SERVO_MAX_US)us=SERVO_MAX_US; return (uint32_t)((uint64_t)us*max_duty/period_us); }
 static inline uint32_t angleToUs(float d){ d=clampf(d,0,180); return (uint32_t)(SERVO_MIN_US + (SERVO_MAX_US-SERVO_MIN_US)*(d/180.0f) + 0.5f); }
 static inline void servoWriteDeg(float d){ ledcWrite(SERVO_LEDC_CH, usToDuty(angleToUs(d))); }
-static inline void servoSetTargetFromCmd(int cmd){ if(cmd>0) servo_target_deg=175; else if(cmd<0) servo_target_deg=130; else return; servo_reached=false; }
+static inline void servoSetTargetFromCmd(int cmd){ if(cmd>0) servo_target_deg=180; else if(cmd<0) servo_target_deg=130; else return; servo_reached=false; }
 static inline void servoUpdate(){
   float c = servo_current_deg, t = servo_target_deg;
   if(fabsf(t - c) <= SERVO_SLEW_DEG_PER_TICK){ c = t; servo_reached = true; }
