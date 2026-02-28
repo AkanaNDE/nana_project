@@ -1,0 +1,21 @@
+running develop
+running egg_info
+writing nana_core.egg-info/PKG-INFO
+writing dependency_links to nana_core.egg-info/dependency_links.txt
+writing entry points to nana_core.egg-info/entry_points.txt
+writing requirements to nana_core.egg-info/requires.txt
+writing top-level names to nana_core.egg-info/top_level.txt
+reading manifest file 'nana_core.egg-info/SOURCES.txt'
+writing manifest file 'nana_core.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana-core.egg-link (link to .)
+Installing apriltag_chanon script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+Installing armrpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+Installing driverpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+Installing griprpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+Installing joystick_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+Installing mahorpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+Installing plot_chanon script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+
+Installed /home/nadeem/nana_project/nana_ws/build/nana_core
+running symlink_data
