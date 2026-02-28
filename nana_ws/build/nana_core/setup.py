@@ -1,1 +1,0 @@
-/home/nadeem/nana_project/nana_ws/src/nana_core/setup.py

@@ -20,7 +20,7 @@ KNOWN_TAG_SIZE_CM = 7.0
 
 at_detector = Detector(families='tagStandard52h13')
 55
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(2)
 frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
