@@ -9,6 +9,7 @@ setup.py
 ../../build/nana_core/nana_core.egg-info/top_level.txt
 ../../build/nana_core/nana_core.egg-info/zip-safe
 launch/ joysticklaunch.launch.py
+nana_core/Orchestrator_node.py
 nana_core/__init__.py
 nana_core/apriltag_chanon.py
 nana_core/armrpm_node.py

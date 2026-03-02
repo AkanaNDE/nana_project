@@ -1,4 +1,5 @@
 [console_scripts]
+Orchestrator_node = nana_core.Orchestrator_node:main
 apriltag_chanon = nana_core.apriltag_chanon:main
 armrpm_node = nana_core.armrpm_node:main
 driverpm_node = nana_core.driverpm_node:main

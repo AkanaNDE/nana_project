@@ -31,6 +31,7 @@ setup(
             'griprpm_node = nana_core.griprpm_node:main',
             'apriltag_chanon = nana_core.apriltag_chanon:main',
             'plot_chanon = nana_core.plot_chanon:main',
+            'Orchestrator_node = nana_core.Orchestrator_node:main',
         ],
     },
 )
