@@ -6,29 +6,28 @@ import numpy as np
 from sensor_msgs.msg import CompressedImage
 
 
-class CameraPublisher(Node):
+class TagCameraPublisher(Node):
 
     def __init__(self):
-        super().__init__('camera_publisher')
+        super().__init__('camera_tag_node')   # ✅ เปลี่ยนชื่อ node
 
-        self.cap = cv2.VideoCapture(4)  # เปลี่ยน index ให้ตรงกับ Pi
+        self.cap = cv2.VideoCapture(2)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
         if not self.cap.isOpened():
-            self.get_logger().error("Cannot open camera")
+            self.get_logger().error("Cannot open tag camera")
         else:
-            self.get_logger().info("Camera opened")
+            self.get_logger().info("Tag camera opened")
 
+        # ✅ เปลี่ยน topic
         self.pub = self.create_publisher(
             CompressedImage,
-            '/camera/image/compressed',
+            '/camera/tag/compressed',
             10
         )
 
         self.timer = self.create_timer(0.03, self.publish_frame)
-
-        self.get_logger().info("Camera Publisher started (Pi side)")
 
     def publish_frame(self):
         ret, frame = self.cap.read()
@@ -52,9 +51,9 @@ class CameraPublisher(Node):
         super().destroy_node()
 
 
-def main(args=None):
-    rclpy.init(args=args)
-    node = CameraPublisher()
+def main():
+    rclpy.init()
+    node = TagCameraPublisher()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()

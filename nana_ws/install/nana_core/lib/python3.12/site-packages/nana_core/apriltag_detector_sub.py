@@ -24,7 +24,7 @@ class AprilTagProcessorPC(Node):
 
         self.sub = self.create_subscription(
             CompressedImage,
-            '/camera/image/compressed',
+            '/camera/tag/compressed',
             self.image_callback,
             10
         )

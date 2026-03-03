@@ -21,7 +21,7 @@ class SegmentationSteeringNode(Node):
         self.model = YOLO("/home/nadeem/nana_project/chanon/rack_segm.pt")
 
         # Camera
-        self.cap = cv2.VideoCapture(2)
+        self.cap = cv2.VideoCapture(4)
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 

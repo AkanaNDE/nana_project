@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import os
+import time
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
@@ -6,7 +8,6 @@ from std_msgs.msg import String
 import cv2
 import math
 import numpy as np
-
 from sensor_msgs.msg import CompressedImage
 from ultralytics import YOLO
 
@@ -15,7 +16,7 @@ class SegmentationSteeringFromROS(Node):
     def __init__(self):
         super().__init__('segmentation_steering_node')
 
-        # Publisher (ให้ orchestrator ใช้งานได้ทันที)
+        # Publisher
         self.publisher_ = self.create_publisher(String, '/plot_direction', 10)
 
         # Params
@@ -29,32 +30,37 @@ class SegmentationSteeringFromROS(Node):
         self.deadzone_angle = float(self.get_parameter('deadzone_angle').value)
         self.preview = bool(self.get_parameter('preview').value)
 
-        # Load YOLO model (รันบน PC)
+        # Disable preview if no display
+        if not os.environ.get("DISPLAY"):
+            self.get_logger().warn("No DISPLAY detected. Preview disabled.")
+            self.preview = False
+
+        # Load model
         self.model = YOLO(self.model_path)
 
-        # Subscribe ภาพจาก Pi
+        # Subscribe image
         self.sub = self.create_subscription(
             CompressedImage,
-            '/camera/image/compressed',
+            '/camera/plot/compressed',
             self.on_image,
             10
         )
 
-        self.get_logger().info("SegmentationSteeringFromROS started (sub /camera/image/compressed)")
+        self.last_time = time.time()
+
+        self.get_logger().info("SegmentationSteeringFromROS started")
 
     def on_image(self, msg: CompressedImage):
-        # Decode JPEG -> frame
         np_arr = np.frombuffer(msg.data, dtype=np.uint8)
         frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
         if frame is None:
-            self.get_logger().warn("Failed to decode image")
             return
 
-        # ===== logic เดิมของคุณ (ไม่เปลี่ยน) =====
         h, w, _ = frame.shape
         screen_cx = w // 2
 
-        results = self.model.track(frame, persist=True, conf=self.conf)
+        # 🔥 ใช้ predict แทน track เพื่อลด lag
+        results = self.model(frame, conf=self.conf)
 
         command = "SEARCHING"
         angle_deg = 0.0
@@ -97,41 +103,55 @@ class SegmentationSteeringFromROS(Node):
                 else:
                     command = "FORWARD"
 
-        # ===== ทำให้ compatible กับ orchestrator (ไม่เปลี่ยน logic แค่แปลคำ) =====
+        # Convert to orchestrator format
         if command == "FORWARD":
             out_cmd = "CENTER"
         elif command == "SEARCHING":
             out_cmd = "NOT_FOUND"
         else:
-            out_cmd = command  # LEFT / RIGHT
+            out_cmd = command
 
-        # Publish command
+        # Publish
         out = String()
         out.data = out_cmd
         self.publisher_.publish(out)
 
-        # ===== Preview (เหมือนเดิม) =====
+        # =======================
+        # 🔵 Preview Window
+        # =======================
         if self.preview:
-            vis = frame.copy()
-            cv2.line(vis, (screen_cx, 0), (screen_cx, h), (0, 255, 0), 2)
+            try:
+                vis = frame.copy()
 
-            cv2.putText(vis, f"deadzone_angle={self.deadzone_angle:.1f} deg",
-                        (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+                # FPS
+                now = time.time()
+                fps = 1.0 / (now - self.last_time)
+                self.last_time = now
 
-            if best_poly is not None:
-                cv2.polylines(vis, [best_poly], isClosed=True, color=(255, 0, 0), thickness=2)
+                cv2.line(vis, (screen_cx, 0), (screen_cx, h), (0, 255, 0), 2)
 
-            if best_cx is not None and best_cy is not None:
-                cv2.circle(vis, (best_cx, best_cy), 6, (0, 0, 255), -1)
-                cv2.line(vis, (screen_cx, h), (best_cx, best_cy), (0, 255, 255), 2)
+                if best_poly is not None:
+                    cv2.polylines(vis, [best_poly], True, (255, 0, 0), 2)
 
-            cv2.putText(vis, f"Command: {out_cmd}", (20, 70),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
-            cv2.putText(vis, f"Angle: {angle_deg:.1f} deg", (20, 110),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
+                if best_cx is not None and best_cy is not None:
+                    cv2.circle(vis, (best_cx, best_cy), 6, (0, 0, 255), -1)
+                    cv2.line(vis, (screen_cx, h), (best_cx, best_cy), (0, 255, 255), 2)
 
-            cv2.imshow("PC Segmentation Preview (from ROS image)", vis)
-            cv2.waitKey(1)
+                cv2.putText(vis, f"CMD: {out_cmd}", (20, 40),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+                cv2.putText(vis, f"Angle: {angle_deg:.1f}", (20, 80),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+
+                cv2.putText(vis, f"FPS: {fps:.1f}", (20, 120),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
+
+                cv2.imshow("PC Segmentation Preview", vis)
+                cv2.waitKey(1)
+
+            except Exception as e:
+                self.get_logger().warn(f"Preview error: {e}")
+                self.preview = False
 
         self.get_logger().info(f"Command: {out_cmd}")
 
