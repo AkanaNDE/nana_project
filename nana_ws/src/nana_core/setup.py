@@ -32,6 +32,10 @@ setup(
             'apriltag_chanon = nana_core.apriltag_chanon:main',
             'plot_chanon = nana_core.plot_chanon:main',
             'Orchestrator_node = nana_core.Orchestrator_node:main',
+            'apriltag_cameraPI_pub = nana_core.apriltag_cameraPI_pub:main',
+            'apriltag_detector_sub = nana_core.apriltag_detector_sub:main',
+            'plot_cameraPI_pub = nana_core.plot_cameraPI_pub:main',
+            'plot_detector_sub = nana_core.plot_detector_sub:main',
         ],
     },
 )
