@@ -9,7 +9,7 @@ class CameraPublisher(Node):
     def __init__(self):
         super().__init__('camera_publisher')
         self.publisher_ = self.create_publisher(Image, '/camera/image_raw', 10)
-        self.cap = cv2.VideoCapture(0) # ปรับ Index ตามกล้อง
+        self.cap = cv2.VideoCapture(2) # ปรับ Index ตามกล้อง
         self.bridge = CvBridge()
         
         if not self.cap.isOpened():

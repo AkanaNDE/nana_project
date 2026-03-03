@@ -35,10 +35,14 @@
 /home/nnn/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core-0.0.0-py3.12.egg-info/zip-safe
 /home/nnn/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core-0.0.0-py3.12.egg-info/SOURCES.txt
 /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core/Orchestrator_node
+/home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core/apriltag_cameraPI_pub
 /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core/apriltag_chanon
+/home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core/apriltag_detector_sub
 /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core/armrpm_node
 /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core/driverpm_node
 /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core/griprpm_node
 /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core/joystick_node
 /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core/mahorpm_node
+/home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core/plot_cameraPI_pub
 /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core/plot_chanon
+/home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core/plot_detector_sub

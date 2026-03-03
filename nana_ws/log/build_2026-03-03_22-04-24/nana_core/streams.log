@@ -1,0 +1,35 @@
+[1.709s] Invoking command in '/home/nnn/nana_project/nana_ws/src/nana_core': PYTHONPATH=/home/nnn/nana_project/nana_ws/build/nana_core/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/nnn/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/nana_core build --build-base /home/nnn/nana_project/nana_ws/build/nana_core/build install --record /home/nnn/nana_project/nana_ws/build/nana_core/install.log --single-version-externally-managed install_data
+[2.070s] running egg_info
+[2.095s] writing ../../build/nana_core/nana_core.egg-info/PKG-INFO
+[2.095s] writing dependency_links to ../../build/nana_core/nana_core.egg-info/dependency_links.txt
+[2.099s] writing entry points to ../../build/nana_core/nana_core.egg-info/entry_points.txt
+[2.102s] writing requirements to ../../build/nana_core/nana_core.egg-info/requires.txt
+[2.103s] writing top-level names to ../../build/nana_core/nana_core.egg-info/top_level.txt
+[2.160s] reading manifest file '../../build/nana_core/nana_core.egg-info/SOURCES.txt'
+[2.161s] writing manifest file '../../build/nana_core/nana_core.egg-info/SOURCES.txt'
+[2.161s] running build
+[2.162s] running build_py
+[2.162s] copying nana_core/apriltag_cameraPI_pub.py -> /home/nnn/nana_project/nana_ws/build/nana_core/build/lib/nana_core
+[2.163s] running install
+[2.172s] running install_lib
+[2.198s] copying /home/nnn/nana_project/nana_ws/build/nana_core/build/lib/nana_core/apriltag_cameraPI_pub.py -> /home/nnn/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core
+[2.199s] byte-compiling /home/nnn/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/apriltag_cameraPI_pub.py to apriltag_cameraPI_pub.cpython-312.pyc
+[2.200s] running install_data
+[2.200s] running install_egg_info
+[2.228s] removing '/home/nnn/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core-0.0.0-py3.12.egg-info' (and everything under it)
+[2.229s] Copying ../../build/nana_core/nana_core.egg-info to /home/nnn/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core-0.0.0-py3.12.egg-info
+[2.234s] running install_scripts
+[2.418s] Installing Orchestrator_node script to /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core
+[2.419s] Installing apriltag_cameraPI_pub script to /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core
+[2.422s] Installing apriltag_chanon script to /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core
+[2.423s] Installing apriltag_detector_sub script to /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core
+[2.423s] Installing armrpm_node script to /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core
+[2.424s] Installing driverpm_node script to /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core
+[2.425s] Installing griprpm_node script to /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core
+[2.426s] Installing joystick_node script to /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core
+[2.427s] Installing mahorpm_node script to /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core
+[2.428s] Installing plot_cameraPI_pub script to /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core
+[2.429s] Installing plot_chanon script to /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core
+[2.430s] Installing plot_detector_sub script to /home/nnn/nana_project/nana_ws/install/nana_core/lib/nana_core
+[2.431s] writing list of installed files to '/home/nnn/nana_project/nana_ws/build/nana_core/install.log'
+[2.510s] Invoked command in '/home/nnn/nana_project/nana_ws/src/nana_core' returned '0': PYTHONPATH=/home/nnn/nana_project/nana_ws/build/nana_core/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/nnn/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/nana_core build --build-base /home/nnn/nana_project/nana_ws/build/nana_core/build install --record /home/nnn/nana_project/nana_ws/build/nana_core/install.log --single-version-externally-managed install_data
