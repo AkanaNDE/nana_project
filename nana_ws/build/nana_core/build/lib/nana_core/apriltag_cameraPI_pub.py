@@ -1,59 +1,77 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
+
 import cv2
-import numpy as np
 from sensor_msgs.msg import CompressedImage
 
 
-class TagCameraPublisher(Node):
+TOPIC_IMAGE_COMPRESSED = "/camera/image/compressed"
 
+
+class CameraCompressedPublisher(Node):
     def __init__(self):
-        super().__init__('camera_tag_node')   # ✅ เปลี่ยนชื่อ node
+        super().__init__("camera_compressed_publisher")
 
-        self.cap = cv2.VideoCapture(2)
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        self.pub = self.create_publisher(CompressedImage, TOPIC_IMAGE_COMPRESSED, 10)
 
+        self.declare_parameter("camera_index", 0)
+        self.declare_parameter("timer_period", 0.03)
+        self.declare_parameter("jpeg_quality", 80)
+        self.declare_parameter("preview", False)
+
+        self.camera_index = int(self.get_parameter("camera_index").value)
+        self.timer_period = float(self.get_parameter("timer_period").value)
+        self.jpeg_quality = int(self.get_parameter("jpeg_quality").value)
+        self.preview = bool(self.get_parameter("preview").value)
+
+        self.cap = cv2.VideoCapture(self.camera_index)
         if not self.cap.isOpened():
-            self.get_logger().error("Cannot open tag camera")
+            self.get_logger().error("Cannot open camera. Check camera index / permissions.")
         else:
-            self.get_logger().info("Tag camera opened")
+            self.get_logger().info(f"Camera opened. index={self.camera_index}")
 
-        # ✅ เปลี่ยน topic
-        self.pub = self.create_publisher(
-            CompressedImage,
-            '/camera/tag/compressed',
-            10
-        )
+        self.timer = self.create_timer(self.timer_period, self.timer_callback)
+        self.get_logger().info("Camera Compressed Publisher Started")
 
-        self.timer = self.create_timer(0.03, self.publish_frame)
-
-    def publish_frame(self):
-        ret, frame = self.cap.read()
-        if not ret:
+    def timer_callback(self):
+        if self.cap is None or (not self.cap.isOpened()):
             return
 
-        frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+        ok, frame = self.cap.read()
+        if not ok or frame is None:
+            return
 
-        ok, jpg = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+        ok, enc = cv2.imencode(".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), self.jpeg_quality])
         if not ok:
             return
 
         msg = CompressedImage()
+        msg.header.stamp = self.get_clock().now().to_msg()
         msg.format = "jpeg"
-        msg.data = jpg.tobytes()
-
+        msg.data = enc.tobytes()
         self.pub.publish(msg)
 
+        if self.preview:
+            cv2.imshow("Camera Compressed Preview", frame)
+            cv2.waitKey(1)
+
     def destroy_node(self):
-        self.cap.release()
+        try:
+            if self.cap is not None:
+                self.cap.release()
+        except Exception:
+            pass
+        try:
+            cv2.destroyAllWindows()
+        except Exception:
+            pass
         super().destroy_node()
 
 
-def main():
-    rclpy.init()
-    node = TagCameraPublisher()
+def main(args=None):
+    rclpy.init(args=args)
+    node = CameraCompressedPublisher()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()

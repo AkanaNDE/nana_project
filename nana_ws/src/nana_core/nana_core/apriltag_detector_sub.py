@@ -2,60 +2,92 @@
 import rclpy
 from rclpy.node import Node
 
+from std_msgs.msg import Float32, String
+from std_srvs.srv import Trigger
+from sensor_msgs.msg import CompressedImage
+
 import cv2
 import numpy as np
-
-from sensor_msgs.msg import CompressedImage
-from std_msgs.msg import Float32, String
 from pupil_apriltags import Detector
 
 
 FOCAL_LENGTH = 400.0
 KNOWN_TAG_SIZE_CM = 7.0
 
+TOPIC_IMAGE_COMPRESSED = "/camera/image/compressed"
+TOPIC_DISTANCE = "/apriltag_distance"
+TOPIC_POSITION = "/apriltag_position"
+STOP_SERVICE   = "/apriltag/stop"
 
-class AprilTagProcessorPC(Node):
 
+class AprilTagDistancePublisher(Node):
     def __init__(self):
-        super().__init__('apriltag_processor_pc')
+        super().__init__("apriltag_distance_publisher")
 
-        self.distance_pub = self.create_publisher(Float32, '/apriltag_distance', 10)
-        self.position_pub = self.create_publisher(String, '/apriltag_position', 10)
+        self.distance_pub = self.create_publisher(Float32, TOPIC_DISTANCE, 10)
+        self.position_pub = self.create_publisher(String,  TOPIC_POSITION, 10)
 
-        self.sub = self.create_subscription(
-            CompressedImage,
-            '/camera/tag/compressed',
-            self.image_callback,
-            10
-        )
+        self._running = True
+        self.stop_srv = self.create_service(Trigger, STOP_SERVICE, self.handle_stop)
 
         self.detector = Detector(families="tagStandard52h13")
 
         self.deadzone = 40
+        self.timer_period = 0.03
+        self.timer = self.create_timer(self.timer_period, self.timer_callback)
 
-        self.get_logger().info("PC Processor Node Started - Waiting for images from Pi...")
-
-    def image_callback(self, msg: CompressedImage):
-
-        frame = cv2.imdecode(
-            np.frombuffer(msg.data, np.uint8),
-            cv2.IMREAD_COLOR
+        self.latest_frame = None
+        self.sub = self.create_subscription(
+            CompressedImage, TOPIC_IMAGE_COMPRESSED, self.image_callback, 10
         )
 
-        if frame is None:
+        self.get_logger().info("AprilTag Distance + Position Publisher Started (CompressedImage)")
+
+    def handle_stop(self, request, response):
+        self._running = False
+        try:
+            if self.timer is not None:
+                self.timer.cancel()
+        except Exception:
+            pass
+        try:
+            cv2.destroyAllWindows()
+        except Exception:
+            pass
+        response.success = True
+        response.message = "AprilTag node stopped (timer canceled)."
+        self.get_logger().warn(response.message)
+        return response
+
+    def image_callback(self, msg: CompressedImage):
+        # Decode JPEG -> BGR frame
+        try:
+            buf = np.frombuffer(msg.data, dtype=np.uint8)
+            frame = cv2.imdecode(buf, cv2.IMREAD_COLOR)
+        except Exception:
+            return
+        self.latest_frame = frame
+
+    def timer_callback(self):
+        if not self._running:
             return
 
-        h, w = frame.shape[:2]
-        center_x = w // 2
+        if self.latest_frame is None:
+            self.publish_outputs(position="NOT_FOUND", distance=-1.0)
+            return
+
+        frame = self.latest_frame
+        frame_height, frame_width = frame.shape[:2]
+        center_x = frame_width // 2
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        tags = self.detector.detect(gray)
+        tag_results = self.detector.detect(gray)
 
         position_text = "NOT_FOUND"
         distance_cm = -1.0
 
-        if tags:
-            r = tags[0]
+        if tag_results:
+            r = tag_results[0]
 
             corners = r.corners
             w1 = np.linalg.norm(corners[0] - corners[1])
@@ -75,23 +107,20 @@ class AprilTagProcessorPC(Node):
             else:
                 position_text = "RIGHT"
 
-            # preview
             cv2.circle(frame, (int(r.center[0]), int(r.center[1])), 6, (255, 0, 0), -1)
-            cv2.putText(frame,
-                        f"{position_text}  d={distance_cm:.1f}cm",
-                        (20, 40),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        1,
-                        (0, 255, 0),
-                        2)
+            cv2.putText(frame, f"{position_text}  d={distance_cm:.1f}cm", (20, 40),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-        # publish
-        self.publish_outputs(position_text, distance_cm)
+        self.publish_outputs(position=position_text, distance=distance_cm)
 
-        cv2.imshow("AprilTag (PC)", frame)
+        cv2.line(frame, (center_x, 0), (center_x, frame_height), (0, 255, 0), 2)
+        cv2.line(frame, (center_x - self.deadzone, 0), (center_x - self.deadzone, frame_height), (0, 0, 255), 1)
+        cv2.line(frame, (center_x + self.deadzone, 0), (center_x + self.deadzone, frame_height), (0, 0, 255), 1)
+
+        cv2.imshow("AprilTag Distance & Position", frame)
         cv2.waitKey(1)
 
-    def publish_outputs(self, position, distance):
+    def publish_outputs(self, position: str, distance: float):
         pos_msg = String()
         pos_msg.data = position
         self.position_pub.publish(pos_msg)
@@ -100,14 +129,10 @@ class AprilTagProcessorPC(Node):
         dist_msg.data = float(distance)
         self.distance_pub.publish(dist_msg)
 
-    def destroy_node(self):
-        cv2.destroyAllWindows()
-        super().destroy_node()
-
 
 def main(args=None):
     rclpy.init(args=args)
-    node = AprilTagProcessorPC()
+    node = AprilTagDistancePublisher()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()

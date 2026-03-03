@@ -47,8 +47,8 @@ const int CH_M4A = 6, CH_M4B = 7;
 //////////////////////
 // Control Params
 //////////////////////
-const int MIN_PWM = 650;           // จูนตามมอเตอร์คุณ
-const int MAX_PWM = 900;
+const int MIN_PWM = 300;           // จูนตามมอเตอร์คุณ
+const int MAX_PWM = 500;
 const uint32_t CMD_TIMEOUT_MS = 2000;
 
 const float LIN_DB = 0.02f;
