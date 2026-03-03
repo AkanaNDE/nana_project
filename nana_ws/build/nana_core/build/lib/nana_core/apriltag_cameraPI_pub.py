@@ -1,29 +1,56 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import Image
 import cv2
-from cv_bridge import CvBridge
+import numpy as np
+from sensor_msgs.msg import CompressedImage
+
 
 class CameraPublisher(Node):
+
     def __init__(self):
         super().__init__('camera_publisher')
-        self.publisher_ = self.create_publisher(Image, '/camera/image_raw', 10)
-        self.cap = cv2.VideoCapture(2) # ปรับ Index ตามกล้อง
-        self.bridge = CvBridge()
-        
-        if not self.cap.isOpened():
-            self.get_logger().error("ไม่สามารถเปิดกล้องบน Pi ได้!")
-            
-        self.timer = self.create_timer(0.05, self.timer_callback) # ~20 FPS
 
-    def timer_callback(self):
+        self.cap = cv2.VideoCapture(4)  # เปลี่ยน index ให้ตรงกับ Pi
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
+        if not self.cap.isOpened():
+            self.get_logger().error("Cannot open camera")
+        else:
+            self.get_logger().info("Camera opened")
+
+        self.pub = self.create_publisher(
+            CompressedImage,
+            '/camera/image/compressed',
+            10
+        )
+
+        self.timer = self.create_timer(0.03, self.publish_frame)
+
+        self.get_logger().info("Camera Publisher started (Pi side)")
+
+    def publish_frame(self):
         ret, frame = self.cap.read()
-        if ret:
-            # บีบอัดขนาดภาพก่อนส่ง (Optional: ช่วยลด Bandwidth)
-            # frame = cv2.resize(frame, (320, 240)) 
-            msg = self.bridge.cv2_to_imgmsg(frame, encoding="bgr8")
-            self.publisher_.publish(msg)
+        if not ret:
+            return
+
+        frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+
+        ok, jpg = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+        if not ok:
+            return
+
+        msg = CompressedImage()
+        msg.format = "jpeg"
+        msg.data = jpg.tobytes()
+
+        self.pub.publish(msg)
+
+    def destroy_node(self):
+        self.cap.release()
+        super().destroy_node()
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -32,5 +59,6 @@ def main(args=None):
     node.destroy_node()
     rclpy.shutdown()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

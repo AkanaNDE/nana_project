@@ -11,7 +11,7 @@ class CameraPublisher(Node):
     def __init__(self):
         super().__init__('camera_publisher')
 
-        self.cap = cv2.VideoCapture(2)  # เปลี่ยน index ให้ตรงกับ Pi
+        self.cap = cv2.VideoCapture(4)  # เปลี่ยน index ให้ตรงกับ Pi
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
