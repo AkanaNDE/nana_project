@@ -1,0 +1,31 @@
+[0.519s] Invoking command in '/home/nadeem/nana_project/nana_ws/src/nana_core': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/nadeem/nana_project/nana_ws/build/nana_core/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/nana_core build --build-base /home/nadeem/nana_project/nana_ws/build/nana_core/build install --record /home/nadeem/nana_project/nana_ws/build/nana_core/install.log --single-version-externally-managed install_data
+[0.666s] running egg_info
+[0.677s] writing ../../build/nana_core/nana_core.egg-info/PKG-INFO
+[0.677s] writing dependency_links to ../../build/nana_core/nana_core.egg-info/dependency_links.txt
+[0.677s] writing entry points to ../../build/nana_core/nana_core.egg-info/entry_points.txt
+[0.677s] writing requirements to ../../build/nana_core/nana_core.egg-info/requires.txt
+[0.677s] writing top-level names to ../../build/nana_core/nana_core.egg-info/top_level.txt
+[0.698s] reading manifest file '../../build/nana_core/nana_core.egg-info/SOURCES.txt'
+[0.698s] writing manifest file '../../build/nana_core/nana_core.egg-info/SOURCES.txt'
+[0.698s] running build
+[0.699s] running build_py
+[0.699s] copying nana_core/plot_chanon.py -> /home/nadeem/nana_project/nana_ws/build/nana_core/build/lib/nana_core
+[0.699s] running install
+[0.705s] running install_lib
+[0.716s] copying /home/nadeem/nana_project/nana_ws/build/nana_core/build/lib/nana_core/plot_chanon.py -> /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core
+[0.716s] byte-compiling /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/plot_chanon.py to plot_chanon.cpython-312.pyc
+[0.717s] running install_data
+[0.718s] running install_egg_info
+[0.729s] removing '/home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core-0.0.0-py3.12.egg-info' (and everything under it)
+[0.729s] Copying ../../build/nana_core/nana_core.egg-info to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core-0.0.0-py3.12.egg-info
+[0.730s] running install_scripts
+[0.813s] Installing Orchestrator_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.813s] Installing apriltag_chanon script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.813s] Installing armrpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.813s] Installing driverpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.813s] Installing griprpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.813s] Installing joystick_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.813s] Installing mahorpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.813s] Installing plot_chanon script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.813s] writing list of installed files to '/home/nadeem/nana_project/nana_ws/build/nana_core/install.log'
+[0.846s] Invoked command in '/home/nadeem/nana_project/nana_ws/src/nana_core' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/nadeem/nana_project/nana_ws/build/nana_core/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/nana_core build --build-base /home/nadeem/nana_project/nana_ws/build/nana_core/build install --record /home/nadeem/nana_project/nana_ws/build/nana_core/install.log --single-version-externally-managed install_data

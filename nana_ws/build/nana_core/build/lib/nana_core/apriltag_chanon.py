@@ -30,7 +30,7 @@ class AprilTagDistancePublisher(Node):
         self.stop_srv = self.create_service(Trigger, STOP_SERVICE, self.handle_stop)
 
         # Camera
-        self.cap = cv2.VideoCapture(4)  # เปลี่ยน index ตามกล้องของคุณ
+        self.cap = cv2.VideoCapture(2)  # เปลี่ยน index ตามกล้องของคุณ
         if not self.cap.isOpened():
             self.get_logger().error("Cannot open camera. Check camera index / permissions.")
         else:
