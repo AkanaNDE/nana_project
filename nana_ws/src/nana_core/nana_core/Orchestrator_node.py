@@ -25,6 +25,8 @@ class MissionState:
     STOP_AND_KILL_APRILTAG = 'STOP_AND_KILL_APRILTAG'
     TURN_LEFT_1S   = 'TURN_LEFT_1S'
     FORWARD_1S     = 'FORWARD_1S'
+    TURN_RIGHT_1S  = 'TURN_RIGHT_1S'  
+    BACKWARD_1S    = 'BACKWARD_1S'    
     PLOT_TRACK     = 'PLOT_TRACK'
 
 
@@ -53,7 +55,7 @@ class MissionOrchestrator(Node):
         self.state_enter_time = time.monotonic()
 
         # --- params / tuning ---
-        self.stop_distance_cm = 50.0  # ตามที่คุณต้องการ (ต่ำกว่า 50 หยุด)
+        self.stop_distance_cm = 65.0  # ตามที่คุณต้องการ (ต่ำกว่า 50 หยุด)
         self.forward_speed = 0.35     # linear.y ที่ส่งไป /nana/cmd_arm
         self.turn_speed = 0.35        # angular.z
         self.search_turn_speed = 0.20 # ตอน NOT_FOUND
@@ -160,7 +162,7 @@ class MissionOrchestrator(Node):
 
     def do_turn_left_1s(self):
         # 3) เลี้ยวซ้าย 1 วินาที
-        if self.elapsed_in_state() < 1.0:
+        if self.elapsed_in_state() < 4.0:
             self.publish_cmd(0.0, +self.turn_speed)
         else:
             self.stop_robot()
@@ -168,11 +170,27 @@ class MissionOrchestrator(Node):
 
     def do_forward_1s(self):
         # 3) เดินหน้า 1 วินาที
-        if self.elapsed_in_state() < 1.0:
-            self.publish_cmd(self.forward_speed, 0.0)
+        if self.elapsed_in_state() < 2.0:
+            self.publish_cmd(+self.forward_speed, 0.0)
         else:
             self.stop_robot()
-            self.enter_state(MissionState.PLOT_TRACK)
+            self.enter_state(MissionState.TURN_RIGHT_1S)
+
+    def do_turn_right_1s(self):
+        # เลี้ยวขวา (angular.z เป็นค่าลบ)
+        if self.elapsed_in_state() < 2.0:
+            self.publish_cmd(0.0, -self.turn_speed)
+        else:
+            self.stop_robot()
+            self.enter_state(MissionState.BACKWARD_1S) # ไปสถานะถัดไป
+
+    def do_backward_1s(self):
+        # ถอยหลัง (linear.y เป็นค่าลบ)
+        if self.elapsed_in_state() < 1.0:
+            self.publish_cmd(-self.forward_speed, 0.0)
+        else:
+            self.stop_robot()
+            self.enter_state(MissionState.PLOT_TRACK) # จบด้วยการตาม Plot
 
     def do_plot_track(self):
         # 4) รับทิศทางจาก detect plot แล้วคุมรถต่อ
@@ -198,6 +216,10 @@ class MissionOrchestrator(Node):
             self.do_turn_left_1s()
         elif self.state == MissionState.FORWARD_1S:
             self.do_forward_1s()
+        elif self.state == MissionState.TURN_RIGHT_1S:
+            self.do_turn_right_1s()
+        elif self.state == MissionState.BACKWARD_1S:   
+            self.do_backward_1s()
         elif self.state == MissionState.PLOT_TRACK:
             self.do_plot_track()
         else:

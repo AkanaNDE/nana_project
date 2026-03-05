@@ -160,7 +160,7 @@ class MissionOrchestrator(Node):
 
     def do_turn_left_1s(self):
         # 3) เลี้ยวซ้าย 1 วินาที
-        if self.elapsed_in_state() < 1.0:
+        if self.elapsed_in_state() < 2.0:
             self.publish_cmd(0.0, +self.turn_speed)
         else:
             self.stop_robot()

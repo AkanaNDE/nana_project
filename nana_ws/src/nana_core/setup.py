@@ -36,6 +36,9 @@ setup(
             'apriltag_detector_sub = nana_core.apriltag_detector_sub:main',
             'plot_cameraPI_pub = nana_core.plot_cameraPI_pub:main',
             'plot_detector_sub = nana_core.plot_detector_sub:main',
+            'apriltag_cameraPI_pub2 = nana_core.apriltag_cameraPI_pub2:main',
+            'apriltag_detector_sub2 = nana_core.apriltag_detector_sub2:main',
+            'Orchestrator_node2 = nana_core.Orchestrator_node2:main',
         ],
     },
 )
