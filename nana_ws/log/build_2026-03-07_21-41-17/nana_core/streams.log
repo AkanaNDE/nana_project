@@ -1,0 +1,41 @@
+[0.597s] Invoking command in '/home/nadeem/nana_project/nana_ws/src/nana_core': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/nadeem/nana_project/nana_ws/build/nana_core/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/nana_core build --build-base /home/nadeem/nana_project/nana_ws/build/nana_core/build install --record /home/nadeem/nana_project/nana_ws/build/nana_core/install.log --single-version-externally-managed install_data
+[0.748s] running egg_info
+[0.757s] writing ../../build/nana_core/nana_core.egg-info/PKG-INFO
+[0.757s] writing dependency_links to ../../build/nana_core/nana_core.egg-info/dependency_links.txt
+[0.758s] writing entry points to ../../build/nana_core/nana_core.egg-info/entry_points.txt
+[0.758s] writing requirements to ../../build/nana_core/nana_core.egg-info/requires.txt
+[0.758s] writing top-level names to ../../build/nana_core/nana_core.egg-info/top_level.txt
+[0.776s] reading manifest file '../../build/nana_core/nana_core.egg-info/SOURCES.txt'
+[0.777s] writing manifest file '../../build/nana_core/nana_core.egg-info/SOURCES.txt'
+[0.777s] running build
+[0.777s] running build_py
+[0.777s] copying nana_core/plot_cameraPI_pub.py -> /home/nadeem/nana_project/nana_ws/build/nana_core/build/lib/nana_core
+[0.778s] copying nana_core/apriltag_cameraPI_pub2.py -> /home/nadeem/nana_project/nana_ws/build/nana_core/build/lib/nana_core
+[0.778s] running install
+[0.782s] running install_lib
+[0.791s] copying /home/nadeem/nana_project/nana_ws/build/nana_core/build/lib/nana_core/plot_cameraPI_pub.py -> /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core
+[0.791s] copying /home/nadeem/nana_project/nana_ws/build/nana_core/build/lib/nana_core/apriltag_cameraPI_pub2.py -> /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core
+[0.792s] byte-compiling /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/plot_cameraPI_pub.py to plot_cameraPI_pub.cpython-312.pyc
+[0.793s] byte-compiling /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/apriltag_cameraPI_pub2.py to apriltag_cameraPI_pub2.cpython-312.pyc
+[0.793s] running install_data
+[0.793s] running install_egg_info
+[0.803s] removing '/home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core-0.0.0-py3.12.egg-info' (and everything under it)
+[0.805s] Copying ../../build/nana_core/nana_core.egg-info to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core-0.0.0-py3.12.egg-info
+[0.806s] running install_scripts
+[0.883s] Installing Orchestrator_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.883s] Installing Orchestrator_node2 script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.883s] Installing apriltag_cameraPI_pub script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.883s] Installing apriltag_cameraPI_pub2 script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.883s] Installing apriltag_chanon script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.883s] Installing apriltag_detector_sub script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.884s] Installing apriltag_detector_sub2 script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.884s] Installing armrpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.884s] Installing driverpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.884s] Installing griprpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.884s] Installing joystick_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.884s] Installing mahorpm_node script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.884s] Installing plot_cameraPI_pub script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.884s] Installing plot_chanon script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.884s] Installing plot_detector_sub script to /home/nadeem/nana_project/nana_ws/install/nana_core/lib/nana_core
+[0.885s] writing list of installed files to '/home/nadeem/nana_project/nana_ws/build/nana_core/install.log'
+[0.917s] Invoked command in '/home/nadeem/nana_project/nana_ws/src/nana_core' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/nadeem/nana_project/nana_ws/build/nana_core/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/nana_core build --build-base /home/nadeem/nana_project/nana_ws/build/nana_core/build install --record /home/nadeem/nana_project/nana_ws/build/nana_core/install.log --single-version-externally-managed install_data

@@ -1,8 +1,11 @@
 [console_scripts]
 Orchestrator_node = nana_core.Orchestrator_node:main
+Orchestrator_node2 = nana_core.Orchestrator_node2:main
 apriltag_cameraPI_pub = nana_core.apriltag_cameraPI_pub:main
+apriltag_cameraPI_pub2 = nana_core.apriltag_cameraPI_pub2:main
 apriltag_chanon = nana_core.apriltag_chanon:main
 apriltag_detector_sub = nana_core.apriltag_detector_sub:main
+apriltag_detector_sub2 = nana_core.apriltag_detector_sub2:main
 armrpm_node = nana_core.armrpm_node:main
 driverpm_node = nana_core.driverpm_node:main
 griprpm_node = nana_core.griprpm_node:main
