@@ -15,7 +15,7 @@ class CameraCompressedPublisher(Node):
 
         self.pub = self.create_publisher(CompressedImage, TOPIC_IMAGE_COMPRESSED, 10)
 
-        self.declare_parameter("camera_index", 4)
+        self.declare_parameter("camera_index", 0)
         self.declare_parameter("timer_period", 0.03)
         self.declare_parameter("jpeg_quality", 80)
         self.declare_parameter("preview", False)

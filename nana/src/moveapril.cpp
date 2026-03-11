@@ -180,12 +180,12 @@ void driveAll(int pwm, bool forward) {
 }
 
 void turnLeftSoft(int pwm) {
-  driveLeftSide(0, true);
+  driveLeftSide(pwm, false);
   driveRightSide(pwm, true);
 }
 
 void turnRightSoft(int pwm) {
-  driveRightSide(0, true);
+  driveRightSide(pwm, false);
   driveLeftSide(pwm, true);
 }
 

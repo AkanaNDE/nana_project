@@ -162,7 +162,7 @@ class MissionOrchestrator(Node):
 
     def do_turn_left_1s(self):
         # 3) เลี้ยวซ้าย 1 วินาที
-        if self.elapsed_in_state() < 4.0:
+        if self.elapsed_in_state() < 5.0:
             self.publish_cmd(0.0, +self.turn_speed)
         else:
             self.stop_robot()
@@ -170,7 +170,7 @@ class MissionOrchestrator(Node):
 
     def do_forward_1s(self):
         # 3) เดินหน้า 1 วินาที
-        if self.elapsed_in_state() < 2.0:
+        if self.elapsed_in_state() < 4.0:
             self.publish_cmd(+self.forward_speed, 0.0)
         else:
             self.stop_robot()
@@ -178,11 +178,11 @@ class MissionOrchestrator(Node):
 
     def do_turn_right_1s(self):
         # เลี้ยวขวา (angular.z เป็นค่าลบ)
-        if self.elapsed_in_state() < 2.0:
+        if self.elapsed_in_state() < 4.0:
             self.publish_cmd(0.0, -self.turn_speed)
         else:
             self.stop_robot()
-            self.enter_state(MissionState.BACKWARD_1S) # ไปสถานะถัดไป
+            self.enter_state(MissionState.PLOT_TRACK) # ไปสถานะถัดไป
 
     def do_backward_1s(self):
         # ถอยหลัง (linear.y เป็นค่าลบ)
@@ -190,7 +190,8 @@ class MissionOrchestrator(Node):
             self.publish_cmd(-self.forward_speed, 0.0)
         else:
             self.stop_robot()
-            self.enter_state(MissionState.PLOT_TRACK) # จบด้วยการตาม Plot
+            self.enter_state(MissionState.PLOT_TRACK) 
+
 
     def do_plot_track(self):
         # 4) รับทิศทางจาก detect plot แล้วคุมรถต่อ
