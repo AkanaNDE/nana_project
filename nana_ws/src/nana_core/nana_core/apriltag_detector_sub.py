@@ -23,7 +23,7 @@ KNOWN_TAG_SIZE_CM = 7.0
 
 TOPIC_IMAGE_COMPRESSED = "/camera/image/compressed"
 TOPIC_DISTANCE = "/apriltag_distance"
-TOPIC_POSITION = "/apriltag_position"
+TOPIC_POSITION = "/apriltag_position_front"
 TOPIC_ANGLE = "/apriltag_angle"
 STOP_SERVICE = "/apriltag/stop"
 
@@ -122,11 +122,11 @@ class AprilTagDistancePublisher(Node):
         frame = self.latest_frame.copy()
 
         frame_height, frame_width = frame.shape[:2]
-        center_x = frame_width // 2
-        center_y = frame_height // 2
+        center_x = frame_width // 2 
+        center_y = frame_height // 2 
 
         cx = frame_width / 2.0
-        cy = frame_height / 2.0
+        cy = frame_height / 2.0 
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 

@@ -1,239 +1,258 @@
-#!/usr/bin/env python3
-import time
+#!/usr/bin/env python3 
+import time 
+import subprocess 
 
-import rclpy
-from rclpy.node import Node
-from rclpy.qos import qos_profile_system_default
+import rclpy 
+from rclpy.node import Node 
+from rclpy.qos import qos_profile_system_default 
 
-from std_msgs.msg import String, Float32
-from geometry_msgs.msg import Twist
-from std_srvs.srv import Trigger
-
-
-APRIL_POS_TOPIC   = '/apriltag_position'
-APRIL_DIST_TOPIC  = '/apriltag_distance'
-APRIL_STOP_SRV    = '/apriltag/stop'
-
-# 🔁 เปลี่ยนชื่อนี้ให้ตรงกับ detect plot node ของคุณ
-PLOT_TOPIC        = '/plot_direction'
-
-CMD_TOPIC         = '/nana/cmd_arm'
+from std_msgs.msg import String, Float32 
+from geometry_msgs.msg import Twist 
 
 
-class MissionState:
-    APRILTAG_TRACK = 'APRILTAG_TRACK'
-    STOP_AND_KILL_APRILTAG = 'STOP_AND_KILL_APRILTAG'
-    TURN_LEFT_1S   = 'TURN_LEFT_1S'
-    FORWARD_1S     = 'FORWARD_1S'
-    TURN_RIGHT_1S  = 'TURN_RIGHT_1S'  
-    BACKWARD_1S    = 'BACKWARD_1S'    
-    PLOT_TRACK     = 'PLOT_TRACK'
+class MissionState: 
+    WAIT_FOR_ANGLE               = 'WAIT_FOR_ANGLE' 
+    STAGE1_TURN_LEFT_2S          = 'STAGE1_TURN_LEFT_2S' 
+    STAGE1_FORWARD_4S            = 'STAGE1_FORWARD_4S' 
+    STAGE1_TURN_RIGHT_TO_CENTER  = 'STAGE1_TURN_RIGHT_TO_CENTER' 
+    STAGE2_TRACK_TO_30CM         = 'STAGE2_TRACK_TO_30CM' 
+    STAGE3_TURN_LEFT_3S          = 'STAGE3_TURN_LEFT_3S' 
+    STAGE3_FORWARD_1S            = 'STAGE3_FORWARD_1S' 
+    STAGE4_RUN_PLOT_CHANON       = 'STAGE4_RUN_PLOT_CHANON' 
+    DONE                         = 'DONE' 
 
 
-class MissionOrchestrator(Node):
-    def __init__(self):
-        super().__init__('mission_orchestrator')
+class MissionOrchestrator(Node): 
 
-        # --- pubs ---
-        self.cmd_pub = self.create_publisher(Twist, CMD_TOPIC, qos_profile_system_default)
+    def __init__(self): 
+        super().__init__('mission_orchestrator') 
 
-        # --- subs (Apriltag) ---
-        self.apr_pos = 'NOT_FOUND'
-        self.apr_dist = 9999.0
-        self.create_subscription(String,  APRIL_POS_TOPIC,  self.apr_pos_cb,  qos_profile_system_default)
-        self.create_subscription(Float32, APRIL_DIST_TOPIC, self.apr_dist_cb, qos_profile_system_default)
+        self.cmd_pub = self.create_publisher( 
+            Twist, 
+            '/nana/cmd_arm', 
+            qos_profile_system_default 
+        ) 
 
-        # --- subs (Plot) ---
-        self.plot_dir = 'NOT_FOUND'
-        self.create_subscription(String, PLOT_TOPIC, self.plot_cb, qos_profile_system_default)
+        self.create_subscription(Float32, '/apriltag_angle', self.apr_angle_cb, 10) 
+        self.create_subscription(String, '/apriltag_position_front', self.apr_front_cb, 10) 
+        self.create_subscription(Float32, '/apriltag_distance', self.apr_distance_cb, 10) 
 
-        # --- service client for stopping apriltag node ---
-        self.stop_client = self.create_client(Trigger, APRIL_STOP_SRV)
+        self.state = MissionState.WAIT_FOR_ANGLE 
+        self.state_enter_time = time.monotonic() 
 
-        # --- state machine ---
-        self.state = MissionState.APRILTAG_TRACK
-        self.state_enter_time = time.monotonic()
+        self.apr_angle = 999.0 
+        self.apr_angle_received = False 
 
-        # --- params / tuning ---
-        self.stop_distance_cm = 65.0  # ตามที่คุณต้องการ (ต่ำกว่า 50 หยุด)
-        self.forward_speed = 0.35     # linear.y ที่ส่งไป /nana/cmd_arm
-        self.turn_speed = 0.35        # angular.z
-        self.search_turn_speed = 0.20 # ตอน NOT_FOUND
+        self.apr_front = 'NOT_FOUND' 
+        self.apr_distance = -1.0 
 
-        # ถ้าข้อมูล apriltag มาไม่ต่อเนื่อง ให้คุมความปลอดภัย
-        self.last_apr_update = time.monotonic()
-        self.apr_timeout_s = 1.0
+        self.turn_speed = 0.35 
+        self.forward_speed = 0.25 
+        self.stop_distance_cm = 60.0 
 
-        # control loop
-        self.timer = self.create_timer(0.02, self.control_loop)  # 50 Hz
+        self.proc_apriltag = None 
+        self.proc_plot_chanon = None 
 
-        self.get_logger().info("Mission Orchestrator started.")
+        # เริ่มต้นเปิดกล้องครั้งแรกตัวเดียว
+        self.start_apriltag_detector_sub() 
 
-    # ---------------- callbacks ----------------
-    def apr_pos_cb(self, msg: String):
-        self.apr_pos = msg.data
-        self.last_apr_update = time.monotonic()
+        self.timer = self.create_timer(0.02, self.control_loop) 
 
-    def apr_dist_cb(self, msg: Float32):
-        self.apr_dist = float(msg.data)
-        self.last_apr_update = time.monotonic()
+        self.get_logger().info("Mission Orchestrator Started.") 
 
-    def plot_cb(self, msg: String):
-        self.plot_dir = msg.data
+    # ---------------- Process helpers ---------------- 
 
-    # ---------------- helpers ----------------
-    def publish_cmd(self, linear_y: float, angular_z: float):
-        t = Twist()
-        t.linear.y = float(linear_y)
-        t.angular.z = float(angular_z)
-        self.cmd_pub.publish(t)
+    def run_ros2_node(self, package_name, executable_name): 
+        cmd = ( 
+            "source /opt/ros/jazzy/setup.bash && " 
+            "source ~/nana_project/nana_ws/install/setup.bash && " 
+            f"ros2 run {package_name} {executable_name}" 
+        ) 
+        return subprocess.Popen( 
+            cmd, 
+            shell=True, 
+            executable="/bin/bash" 
+        ) 
 
-    def stop_robot(self):
-        self.publish_cmd(0.0, 0.0)
+    def stop_process(self, proc, name="process"): 
+        if proc is None: 
+            return None 
+            
+        # ใช้ pkill ช่วยเพื่อจัดการ process ที่ค้างอยู่ใน shell
+        subprocess.run(["pkill", "-f", name], stderr=subprocess.DEVNULL)
 
-    def enter_state(self, new_state: str):
-        self.state = new_state
-        self.state_enter_time = time.monotonic()
-        self.get_logger().info(f"-> STATE: {new_state}")
+        if proc.poll() is not None: 
+            self.get_logger().info(f"{name} already stopped.") 
+            return None 
 
-    def elapsed_in_state(self) -> float:
-        return time.monotonic() - self.state_enter_time
+        self.get_logger().info(f"Stopping {name} ...") 
+        proc.terminate() 
+        try: 
+            proc.wait(timeout=1.0) 
+            self.get_logger().info(f"{name} stopped.") 
+        except subprocess.TimeoutExpired: 
+            proc.kill() 
+            proc.wait() 
+        return None 
 
-    def apr_data_stale(self) -> bool:
-        return (time.monotonic() - self.last_apr_update) > self.apr_timeout_s
+    def start_apriltag_detector_sub(self): 
+        if self.proc_apriltag is None or self.proc_apriltag.poll() is not None: 
+            self.get_logger().info("Starting apriltag_detector_sub ...") 
+            self.proc_apriltag = self.run_ros2_node("nana_core", "apriltag_detector_sub")
 
-    def request_stop_apriltag_node(self):
-        # call /apriltag/stop once
-        if not self.stop_client.service_is_ready():
-            # ไม่บังคับรอ ถ้า service ยังไม่พร้อมก็ข้ามไป (node ยังรันต่อได้)
-            self.get_logger().warn("Apriltag stop service not ready yet.")
-            return
+    # ---------------- Callbacks ---------------- 
+    def apr_angle_cb(self, msg): 
+        self.apr_angle = float(msg.data) 
+        self.apr_angle_received = True 
 
-        req = Trigger.Request()
-        future = self.stop_client.call_async(req)
+    def apr_front_cb(self, msg): 
+        self.apr_front = msg.data 
 
-        def done_cb(fut):
-            try:
-                resp = fut.result()
-                self.get_logger().info(f"Apriltag stop resp: success={resp.success}, msg='{resp.message}'")
-            except Exception as e:
-                self.get_logger().error(f"Apriltag stop service failed: {e}")
+    def apr_distance_cb(self, msg): 
+        self.apr_distance = float(msg.data) 
 
-        future.add_done_callback(done_cb)
+    # ---------------- Helpers ---------------- 
+    def publish_cmd(self, linear_y, angular_z): 
+        t = Twist() 
+        t.linear.y = float(linear_y) 
+        t.angular.z = float(angular_z) 
+        self.cmd_pub.publish(t) 
 
-    # ---------------- state behaviors ----------------
-    def do_apriltag_track(self):
-        # 1) ใช้ apriltag_position + distance คุมรถ
-        # 2) ถ้า distance < 50 -> หยุด + สั่ง stop node apriltag
-        if (self.apr_dist > 0.0) and (self.apr_dist < self.stop_distance_cm):
-            self.stop_robot()
-            self.enter_state(MissionState.STOP_AND_KILL_APRILTAG)
-            return
+    def stop_robot(self): 
+        self.publish_cmd(0.0, 0.0) 
 
-        # ถ้าข้อมูล stale (แท็กหลุด) ให้หยุด/หมุนช้า ๆ หาแท็ก
-        if self.apr_data_stale():
-            # เลือกเอาแบบที่คุณอยากได้:
-            # A) หยุดนิ่ง
-            # self.stop_robot()
-            # B) หมุนหาแท็กช้า ๆ
-            self.publish_cmd(0.0, self.search_turn_speed)
-            return
+    def enter_state(self, new_state): 
+        self.get_logger().info(f"Transitioning: {self.state} -> {new_state}") 
+        self.state = new_state 
+        self.state_enter_time = time.monotonic() 
 
-        # คุมตาม position
-        if self.apr_pos == 'CENTER':
-            self.publish_cmd(self.forward_speed, 0.0)
-        elif self.apr_pos == 'LEFT':
-            # หมุนซ้าย
-            self.publish_cmd(0.0, +self.turn_speed)
-        elif self.apr_pos == 'RIGHT':
-            # หมุนขวา
-            self.publish_cmd(0.0, -self.turn_speed)
-        else:
-            # NOT_FOUND
-            self.publish_cmd(0.0, self.search_turn_speed)
+    def elapsed_in_state(self): 
+        return time.monotonic() - self.state_enter_time 
 
-    def do_stop_and_kill_apriltag(self):
-        # หยุด 0.3s เพื่อให้รถนิ่ง แล้วค่อย stop apriltag node
-        self.stop_robot()
+    # ---------------- State Behaviors ---------------- 
 
-        if self.elapsed_in_state() > 0.30:
-            self.request_stop_apriltag_node()
-            self.enter_state(MissionState.TURN_LEFT_1S)
+    def do_wait_for_angle(self): 
+        if not self.apr_angle_received: 
+            self.stop_robot() 
+            return 
+        if self.apr_angle < 0.0: 
+            self.enter_state(MissionState.STAGE2_TRACK_TO_30CM) 
+            return 
+        if self.apr_angle > 0.0: 
+            self.enter_state(MissionState.STAGE1_TURN_LEFT_2S) 
+            return 
+        self.stop_robot() 
 
-    def do_turn_left_1s(self):
-        # 3) เลี้ยวซ้าย 1 วินาที
-        if self.elapsed_in_state() < 5.0:
-            self.publish_cmd(0.0, +self.turn_speed)
-        else:
-            self.stop_robot()
-            self.enter_state(MissionState.FORWARD_1S)
+    def do_stage1_turn_left_2s(self): 
+        if self.elapsed_in_state() >= 5.0: 
+            self.stop_robot() 
+            self.enter_state(MissionState.STAGE1_FORWARD_4S) 
+            return 
+        self.publish_cmd(0.0, self.turn_speed) 
 
-    def do_forward_1s(self):
-        # 3) เดินหน้า 1 วินาที
-        if self.elapsed_in_state() < 4.0:
-            self.publish_cmd(+self.forward_speed, 0.0)
-        else:
-            self.stop_robot()
-            self.enter_state(MissionState.TURN_RIGHT_1S)
+    def do_stage1_forward_4s(self): 
+        if self.elapsed_in_state() >= 9.0: 
+            self.stop_robot() 
+            self.enter_state(MissionState.STAGE1_TURN_RIGHT_TO_CENTER) 
+            return 
+        self.publish_cmd(self.forward_speed, 0.0) 
 
-    def do_turn_right_1s(self):
-        # เลี้ยวขวา (angular.z เป็นค่าลบ)
-        if self.elapsed_in_state() < 4.0:
-            self.publish_cmd(0.0, -self.turn_speed)
-        else:
-            self.stop_robot()
-            self.enter_state(MissionState.PLOT_TRACK) # ไปสถานะถัดไป
+    def do_stage1_turn_right_to_center(self): 
+        if self.apr_front == 'CENTER': 
+            self.stop_robot() 
+            self.enter_state(MissionState.STAGE2_TRACK_TO_30CM) 
+            return 
+        self.publish_cmd(0.0, -self.turn_speed) 
 
-    def do_backward_1s(self):
-        # ถอยหลัง (linear.y เป็นค่าลบ)
-        if self.elapsed_in_state() < 1.0:
-            self.publish_cmd(-self.forward_speed, 0.0)
-        else:
-            self.stop_robot()
-            self.enter_state(MissionState.PLOT_TRACK) 
+    def do_stage2_track_to_30cm(self): 
+        if 0.0 < self.apr_distance <= self.stop_distance_cm: 
+            self.stop_robot() 
+            self.enter_state(MissionState.STAGE3_TURN_LEFT_3S) 
+            return 
+
+        if self.apr_front == 'CENTER': 
+            self.publish_cmd(self.forward_speed, 0.0) 
+        elif self.apr_front == 'LEFT': 
+            self.publish_cmd(0.0, self.turn_speed) 
+        elif self.apr_front == 'RIGHT': 
+            self.publish_cmd(0.0, -self.turn_speed) 
+        else: 
+            self.stop_robot() 
+
+    def do_stage3_turn_left_3s(self): 
+        if self.elapsed_in_state() >= 2.0: 
+            self.stop_robot() 
+            self.enter_state(MissionState.STAGE3_FORWARD_1S) 
+            return 
+        self.publish_cmd(0.0, self.turn_speed) 
+
+    def do_stage3_forward_1s(self): 
+        if self.elapsed_in_state() >= 3.0: 
+            self.stop_robot() 
+            # ย้ายไป Stage 4 เพื่อเคลียร์ Process
+            self.enter_state(MissionState.STAGE4_RUN_PLOT_CHANON) 
+            return 
+        self.publish_cmd(self.forward_speed, 0.0) 
+
+    # ---------- Stage4 ---------- 
+    def do_stage4_run_plot_chanon(self):
+        # 1. สั่งปิดกล้อง และเช็คว่าปิดหรือยัง
+        if self.proc_apriltag is not None:
+            self.get_logger().info("Ensuring apriltag_detector is closed...")
+            self.proc_apriltag = self.stop_process(self.proc_apriltag, "apriltag_detector_sub")
+            self.proc_apriltag = None # เคลียร์ค่าให้เป็น None ชัดเจน
+            return # ออกจากฟังก์ชันเพื่อรอ Loop หน้า (ให้เวลา OS ปิดหน้าต่าง)
+
+        # 2. เมื่อ proc_apriltag เป็น None แล้ว ค่อยรันตัวใหม่
+        if self.proc_plot_chanon is None:
+            self.get_logger().info("Starting plot_chanon.py ...")
+            self.proc_plot_chanon = self.run_ros2_node("nana_core", "plot_chanon.py")
+            # เปลี่ยนไป DONE ทันทีเพื่อไม่ให้รันซ้ำ
+            self.enter_state(MissionState.DONE)
+
+    # ---------- Done ---------- 
+    def do_done(self): 
+        self.stop_robot() 
+
+    # ---------------- Main Loop ---------------- 
+    def control_loop(self): 
+        if self.state == MissionState.WAIT_FOR_ANGLE: 
+            self.do_wait_for_angle() 
+        elif self.state == MissionState.STAGE1_TURN_LEFT_2S: 
+            self.do_stage1_turn_left_2s() 
+        elif self.state == MissionState.STAGE1_FORWARD_4S: 
+            self.do_stage1_forward_4s() 
+        elif self.state == MissionState.STAGE1_TURN_RIGHT_TO_CENTER: 
+            self.do_stage1_turn_right_to_center() 
+        elif self.state == MissionState.STAGE2_TRACK_TO_30CM: 
+            self.do_stage2_track_to_30cm() 
+        elif self.state == MissionState.STAGE3_TURN_LEFT_3S: 
+            self.do_stage3_turn_left_3s() 
+        elif self.state == MissionState.STAGE3_FORWARD_1S: 
+            self.do_stage3_forward_1s() 
+        elif self.state == MissionState.STAGE4_RUN_PLOT_CHANON: 
+            self.do_stage4_run_plot_chanon()
+        elif self.state == MissionState.DONE: 
+            self.do_done() 
+
+    def destroy_node(self): 
+        self.stop_robot() 
+        self.proc_apriltag = self.stop_process(self.proc_apriltag, "apriltag_detector_sub") 
+        self.proc_plot_chanon = self.stop_process(self.proc_plot_chanon, "plot_chanon")
+        super().destroy_node() 
 
 
-    def do_plot_track(self):
-        # 4) รับทิศทางจาก detect plot แล้วคุมรถต่อ
-        d = self.plot_dir
-
-        if d == 'CENTER':
-            self.publish_cmd(self.forward_speed, 0.0)
-        elif d == 'LEFT':
-            self.publish_cmd(0.0, +self.turn_speed)
-        elif d == 'RIGHT':
-            self.publish_cmd(0.0, -self.turn_speed)
-        else:
-            # ถ้า plot ไม่เจอ -> หยุดหรือหมุนหา
-            self.publish_cmd(0.0, self.search_turn_speed)
-
-    # ---------------- main loop ----------------
-    def control_loop(self):
-        if self.state == MissionState.APRILTAG_TRACK:
-            self.do_apriltag_track()
-        elif self.state == MissionState.STOP_AND_KILL_APRILTAG:
-            self.do_stop_and_kill_apriltag()
-        elif self.state == MissionState.TURN_LEFT_1S:
-            self.do_turn_left_1s()
-        elif self.state == MissionState.FORWARD_1S:
-            self.do_forward_1s()
-        elif self.state == MissionState.TURN_RIGHT_1S:
-            self.do_turn_right_1s()
-        elif self.state == MissionState.BACKWARD_1S:   
-            self.do_backward_1s()
-        elif self.state == MissionState.PLOT_TRACK:
-            self.do_plot_track()
-        else:
-            self.stop_robot()
+def main(args=None): 
+    rclpy.init(args=args) 
+    node = MissionOrchestrator() 
+    try: 
+        rclpy.spin(node) 
+    except KeyboardInterrupt: 
+        pass 
+    finally: 
+        node.destroy_node() 
+        rclpy.shutdown() 
 
 
-def main():
-    rclpy.init()
-    node = MissionOrchestrator()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
-
-
-if __name__ == '__main__':
+if __name__ == '__main__': 
     main()
