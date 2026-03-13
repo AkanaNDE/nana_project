@@ -41,8 +41,8 @@ const int CH_M4A = 6, CH_M4B = 7;
 //////////////////////
 // Control Params
 //////////////////////
-const int MIN_PWM = 250;
-const int MAX_PWM = 400;
+const int MIN_PWM = 300;
+const int MAX_PWM = 420;
 const uint32_t CMD_TIMEOUT_MS = 2000;
 
 const float LIN_DB = 0.02f;
@@ -195,10 +195,10 @@ void driveWithTurn(int base_pwm, float turn_sign, int turn_pwm, bool forward_dir
   int right_pwm = base_pwm;
 
   if (turn_sign > 0) {
-    left_pwm  = max(0, base_pwm - delta);
+    left_pwm  = max(1023, base_pwm - delta);
     right_pwm = min(1023, base_pwm + delta);
   } else {
-    right_pwm = max(0, base_pwm - delta);
+    right_pwm = max(1023, base_pwm - delta);
     left_pwm  = min(1023, base_pwm + delta);
   }
 
