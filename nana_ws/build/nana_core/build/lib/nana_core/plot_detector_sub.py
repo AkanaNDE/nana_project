@@ -1,159 +1,231 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
+
+from std_msgs.msg import Float32, String
+from std_srvs.srv import Trigger
 from sensor_msgs.msg import CompressedImage
 
 import cv2
-import math
 import numpy as np
-from ultralytics import YOLO
+from pupil_apriltags import Detector
 
 
-TOPIC_YOLO_IMAGE_COMPRESSED = "/yolo_cam/image/compressed"
+OFFSET = 0
+FX = 400.0
+FY = 400.0
+
+KNOWN_TAG_SIZE_CM = 7.0
+
+TOPIC_IMAGE_COMPRESSED = "/yolo_cam/image/compressed"
+TOPIC_DISTANCE = "/apriltag_distance"
+TOPIC_POSITION = "/apriltag_position"
+TOPIC_ANGLE = "/apriltag_angle"
+STOP_SERVICE = "/apriltag/stop"
 
 
-class SegmentationSteeringNode(Node):
+class AprilTagDistancePublisher2(Node):
 
     def __init__(self):
-        super().__init__('segmentation_steering_node')
+        super().__init__("apriltag_distance_publisher2")
 
-        # Publisher (ให้ orchestrator ใช้งานได้ทันที)
-        self.publisher_ = self.create_publisher(String, '/plot_direction', 10)
-
-        # Load YOLO model
-        self.model = YOLO("/home/nadeem/nana_project/chanon/rack_segm.pt")
-
-        self.deadzone_angle = 3.0
-
-        # latest frame buffer (แทน cap.read())
-        self.latest_frame = None
-
-        # Subscribe compressed images
-        self.sub = self.create_subscription(
-            CompressedImage,
-            TOPIC_YOLO_IMAGE_COMPRESSED,
-            self.image_callback,
-            10
+        image_qos = QoSProfile(
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=ReliabilityPolicy.BEST_EFFORT
         )
 
-        # Timer (ประมาณ 30 FPS)
-        self.timer = self.create_timer(0.03, self.process_frame)
+        self.distance_pub = self.create_publisher(Float32, TOPIC_DISTANCE, 10)
+        self.position_pub = self.create_publisher(String, TOPIC_POSITION, 10)
+        self.angle_pub = self.create_publisher(Float32, TOPIC_ANGLE, 10)
 
-        self.get_logger().info("Segmentation Steering Node Started (with preview, subscribing images)")
+        self._running = True
+        self.stop_srv = self.create_service(Trigger, STOP_SERVICE, self.handle_stop)
 
+        self.detector = Detector(families="tagStandard52h13")
+
+        self.deadzone = 40
+        self.timer_period = 0.03
+
+        self.timer = self.create_timer(self.timer_period, self.timer_callback)
+        self.latest_frame = None
+
+        self.sub = self.create_subscription(
+            CompressedImage,
+            TOPIC_IMAGE_COMPRESSED,
+            self.image_callback,
+            image_qos
+        )
+
+        self.get_logger().info("AprilTag Distance + Position + True Angle Publisher Started")
+
+    def handle_stop(self, request, response):
+        self._running = False
+
+        try:
+            if self.timer is not None:
+                self.timer.cancel()
+        except Exception:
+            pass
+
+        try:
+            cv2.destroyAllWindows()
+        except Exception:
+            pass
+
+        response.success = True
+        response.message = "AprilTag node stopped."
+        self.get_logger().warn(response.message)
+
+        return response
 
     def image_callback(self, msg: CompressedImage):
-        # Decode jpeg -> BGR frame
         try:
             buf = np.frombuffer(msg.data, dtype=np.uint8)
             frame = cv2.imdecode(buf, cv2.IMREAD_COLOR)
+            self.latest_frame = frame
         except Exception:
             return
 
-        self.latest_frame = frame
+    def compute_true_tag_angle_deg(self, pose_R: np.ndarray) -> float:
 
+        tag_normal = pose_R[:, 2]
+        cam_axis = np.array([0.0, 0.0, 1.0])
 
-    def process_frame(self):
-        # เดิม: success, frame = self.cap.read()
-        # ใหม่: ใช้ frame ล่าสุดจาก subscriber (ไม่เปลี่ยน logic ส่วนตัดสินใจ)
-        frame = self.latest_frame
-        if frame is None:
+        cos_theta = np.clip(
+            np.dot(tag_normal, cam_axis) / np.linalg.norm(tag_normal),
+            -1.0,
+            1.0
+        )
+
+        angle = np.degrees(np.arccos(cos_theta))
+
+        if tag_normal[0] < 0:
+            angle = -angle
+
+        return float(angle)
+
+    def timer_callback(self):
+
+        if not self._running:
             return
 
-        frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+        if self.latest_frame is None:
+            self.publish_outputs("NOT_FOUND", -1.0, 0.0)
+            return
 
-        h, w, _ = frame.shape
-        screen_cx = w // 2
+        frame = self.latest_frame.copy()
 
-        results = self.model.track(frame, persist=True, conf=0.5)
+        frame_height, frame_width = frame.shape[:2]
 
-        # ===== logic เดิมของคุณ (ไม่เปลี่ยน) =====
-        command = "SEARCHING"
+        center_x = frame_width // 2 + OFFSET
+        center_y = frame_height // 2
+
+        cx = frame_width / 2.0 + OFFSET
+        cy = frame_height / 2.0
+
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        tag_results = self.detector.detect(
+            gray,
+            estimate_tag_pose=True,
+            camera_params=(FX, FY, cx, cy),
+            tag_size=KNOWN_TAG_SIZE_CM / 100.0
+        )
+
+        position_text = "NOT_FOUND"
+        distance_cm = -1.0
         angle_deg = 0.0
 
-        best_cx = None
-        best_cy = None
-        best_poly = None
+        if tag_results:
 
-        if results[0].masks is not None and len(results[0].masks.xy) > 0:
+            best_tag = None
+            best_dist = 1e9
 
-            best_area = 0
+            for r in tag_results:
 
-            for polygon in results[0].masks.xy:
-                pts = np.array(polygon, dtype=np.float32)
-                area = cv2.contourArea(pts.astype(np.int32))
-
-                if area > best_area:
-                    M = cv2.moments(pts)
-                    if M["m00"] != 0:
-                        cx = int(M["m10"] / M["m00"])
-                        cy = int(M["m01"] / M["m00"])
-
-                        best_area = area
-                        best_cx = cx
-                        best_cy = cy
-                        best_poly = pts.astype(np.int32)
-
-            if best_cx is not None:
-                dist_x = best_cx - screen_cx
-                dist_y = h - best_cy
-                if dist_y == 0:
-                    dist_y = 1
-
-                angle_rad = math.atan2(dist_x, dist_y)
-                angle_deg = math.degrees(angle_rad)
-
-                if angle_deg > self.deadzone_angle:
-                    command = "RIGHT"
-                elif angle_deg < -self.deadzone_angle:
-                    command = "LEFT"
+                if hasattr(r, "pose_t") and r.pose_t is not None:
+                    dist_cm = float(np.linalg.norm(r.pose_t) * 100.0)
                 else:
-                    command = "FORWARD"
+                    dist_cm = 1e9
 
-        # ===== ทำให้ compatible กับ orchestrator (ไม่เปลี่ยน logic แค่แปลคำ) =====
-        if command == "FORWARD":
-            out_cmd = "CENTER"
-        elif command == "SEARCHING":
-            out_cmd = "NOT_FOUND"
-        else:
-            out_cmd = command  # LEFT / RIGHT
+                if dist_cm < best_dist:
+                    best_dist = dist_cm
+                    best_tag = r
 
-        # Publish command
-        msg = String()
-        msg.data = out_cmd
-        self.publisher_.publish(msg)
+            if best_tag is not None:
 
-        # ====== Visualization (Preview Window) ======
-        vis = frame.copy()
+                r = best_tag
 
-        # เส้นกลางจอ
-        cv2.line(vis, (screen_cx, 0), (screen_cx, h), (0, 255, 0), 2)
+                corners = r.corners
+                tag_center_x = int(r.center[0])
+                tag_center_y = int(r.center[1])
 
-        # deadzone angle text
-        cv2.putText(vis, f"deadzone_angle={self.deadzone_angle:.1f} deg",
-                    (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+                if hasattr(r, "pose_t") and r.pose_t is not None:
+                    distance_cm = float(np.linalg.norm(r.pose_t) * 100.0)
 
-        # วาด polygon ที่ใหญ่สุด + centroid
-        if best_poly is not None:
-            cv2.polylines(vis, [best_poly], isClosed=True, color=(255, 0, 0), thickness=2)
+                if hasattr(r, "pose_R") and r.pose_R is not None:
+                    angle_deg = self.compute_true_tag_angle_deg(r.pose_R)
 
-        if best_cx is not None and best_cy is not None:
-            cv2.circle(vis, (best_cx, best_cy), 6, (0, 0, 255), -1)
-            cv2.line(vis, (screen_cx, h), (best_cx, best_cy), (0, 255, 255), 2)
+                error = tag_center_x - center_x
 
-        # แสดงคำสั่ง + มุม
-        cv2.putText(vis, f"Command: {out_cmd}", (20, 70),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
-        cv2.putText(vis, f"Angle: {angle_deg:.1f} deg", (20, 110),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2)
+                if abs(error) <= self.deadzone:
+                    position_text = "CENTER"
+                elif error < 0:
+                    position_text = "LEFT"
+                else:
+                    position_text = "RIGHT"
 
-        cv2.imshow("Plot Segmentation Steering Preview", vis)
+                pts = corners.astype(int).reshape((-1, 1, 2))
+                cv2.polylines(frame, [pts], True, (0, 255, 255), 2)
+
+                cv2.circle(frame, (tag_center_x, tag_center_y), 6, (255, 0, 0), -1)
+
+                cv2.putText(
+                    frame,
+                    f"{position_text} d={distance_cm:.1f}cm true_ang={angle_deg:.1f}deg",
+                    (20, 40),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.8,
+                    (0, 255, 0),
+                    2
+                )
+
+                cv2.putText(
+                    frame,
+                    f"id={r.tag_id}",
+                    (20, 75),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.8,
+                    (0, 255, 255),
+                    2
+                )
+
+        self.publish_outputs(position_text, distance_cm, angle_deg)
+
+        cv2.line(frame, (center_x, 0), (center_x, frame_height), (0, 255, 0), 2)
+        cv2.line(frame, (0, center_y), (frame_width, center_y), (255, 255, 0), 1)
+
+        cv2.line(frame, (center_x - self.deadzone, 0), (center_x - self.deadzone, frame_height), (0, 0, 255), 1)
+        cv2.line(frame, (center_x + self.deadzone, 0), (center_x + self.deadzone, frame_height), (0, 0, 255), 1)
+
+        cv2.imshow("AprilTag Distance Position True Angle", frame)
         cv2.waitKey(1)
 
-        # Debug log (optional)
-        self.get_logger().info(f"Command: {out_cmd}")
+    def publish_outputs(self, position, distance, angle):
 
+        pos_msg = String()
+        pos_msg.data = position
+        self.position_pub.publish(pos_msg)
+
+        dist_msg = Float32()
+        dist_msg.data = float(distance)
+        self.distance_pub.publish(dist_msg)
+
+        angle_msg = Float32()
+        angle_msg.data = float(angle)
+        self.angle_pub.publish(angle_msg)
 
     def destroy_node(self):
         try:
@@ -164,15 +236,19 @@ class SegmentationSteeringNode(Node):
 
 
 def main(args=None):
+
     rclpy.init(args=args)
-    node = SegmentationSteeringNode()
+
+    node = AprilTagDistancePublisher2()
+
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
-    node.destroy_node()
-    rclpy.shutdown()
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

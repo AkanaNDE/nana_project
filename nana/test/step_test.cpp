@@ -2,7 +2,7 @@
 
 // === Pin Definitions ===
 const int STEP_PIN = 22;     // Step signal
-const int DIR_PIN = 13;      // Direction signal
+const int DIR_PIN = 23;      // Direction signal
 
 const int ENABLE_PIN = 21; // Optional: Uncomment if using an enable pin
 
@@ -30,14 +30,6 @@ void setup() {
 void loop() {
   // Rotate one revolution
   digitalWrite(DIR_PIN, HIGH);
-  for (int i = 0; i < STEPS_PER_REV; i++) {
-    digitalWrite(STEP_PIN, HIGH);
-    delayMicroseconds(STEP_DELAY_US);
-    digitalWrite(STEP_PIN, LOW);
-    delayMicroseconds(STEP_DELAY_US);
-  }
-  // Rotate back
-  digitalWrite(DIR_PIN, LOW);
   for (int i = 0; i < STEPS_PER_REV; i++) {
     digitalWrite(STEP_PIN, HIGH);
     delayMicroseconds(STEP_DELAY_US);

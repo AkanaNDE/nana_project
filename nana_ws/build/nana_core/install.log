@@ -13,7 +13,9 @@
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/plot_chanon.py
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/apriltag_detector_sub.py
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/apriltag_detector_sub2.py
+/home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/Orchestrator_node3.py
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/Orchestrator_node.py
+/home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/test.py
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/__pycache__/__init__.cpython-312.pyc
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/__pycache__/armrpm_node.cpython-312.pyc
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/__pycache__/mahorpm_node.cpython-312.pyc
@@ -29,7 +31,9 @@
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/__pycache__/plot_chanon.cpython-312.pyc
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/__pycache__/apriltag_detector_sub.cpython-312.pyc
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/__pycache__/apriltag_detector_sub2.cpython-312.pyc
+/home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/__pycache__/Orchestrator_node3.cpython-312.pyc
 /home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/__pycache__/Orchestrator_node.cpython-312.pyc
+/home/nadeem/nana_project/nana_ws/install/nana_core/lib/python3.12/site-packages/nana_core/__pycache__/test.cpython-312.pyc
 /home/nadeem/nana_project/nana_ws/install/nana_core/share/ament_index/resource_index/packages/nana_core
 /home/nadeem/nana_project/nana_ws/install/nana_core/share/nana_core/package.xml
 /home/nadeem/nana_project/nana_ws/install/nana_core/share/nana_core/launch/ joysticklaunch.launch.py

@@ -2,11 +2,15 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
+from sensor_msgs.msg import CompressedImage
 
 import cv2
 import math
 import numpy as np
 from ultralytics import YOLO
+
+
+TOPIC_YOLO_IMAGE_COMPRESSED = "/yolo_cam/image/compressed"
 
 
 class SegmentationSteeringNode(Node):
@@ -20,22 +24,41 @@ class SegmentationSteeringNode(Node):
         # Load YOLO model
         self.model = YOLO("/home/nadeem/nana_project/chanon/rack_segm.pt")
 
-        # Camera
-        self.cap = cv2.VideoCapture(4)
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-
         self.deadzone_angle = 3.0
+
+        # latest frame buffer (แทน cap.read())
+        self.latest_frame = None
+
+        # Subscribe compressed images
+        self.sub = self.create_subscription(
+            CompressedImage,
+            TOPIC_YOLO_IMAGE_COMPRESSED,
+            self.image_callback,
+            10
+        )
 
         # Timer (ประมาณ 30 FPS)
         self.timer = self.create_timer(0.03, self.process_frame)
 
-        self.get_logger().info("Segmentation Steering Node Started (with preview)")
+        self.get_logger().info("Segmentation Steering Node Started (with preview, subscribing images)")
+
+
+    def image_callback(self, msg: CompressedImage):
+        # Decode jpeg -> BGR frame
+        try:
+            buf = np.frombuffer(msg.data, dtype=np.uint8)
+            frame = cv2.imdecode(buf, cv2.IMREAD_COLOR)
+        except Exception:
+            return
+
+        self.latest_frame = frame
 
 
     def process_frame(self):
-        success, frame = self.cap.read()
-        if not success:
+        # เดิม: success, frame = self.cap.read()
+        # ใหม่: ใช้ frame ล่าสุดจาก subscriber (ไม่เปลี่ยน logic ส่วนตัดสินใจ)
+        frame = self.latest_frame
+        if frame is None:
             return
 
         frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
@@ -129,15 +152,10 @@ class SegmentationSteeringNode(Node):
         cv2.waitKey(1)
 
         # Debug log (optional)
-        # (ลด spam: ใช้ debug-level ก็ได้ แต่คงไว้ตามเดิม)
         self.get_logger().info(f"Command: {out_cmd}")
 
 
     def destroy_node(self):
-        try:
-            self.cap.release()
-        except Exception:
-            pass
         try:
             cv2.destroyAllWindows()
         except Exception:
