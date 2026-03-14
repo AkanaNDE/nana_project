@@ -14,7 +14,7 @@ class YoloCameraCompressedPublisher(Node):
         self.pub = self.create_publisher(CompressedImage, TOPIC_YOLO_IMAGE_COMPRESSED, 10)
 
         # ตั้งค่า Parameter
-        self.declare_parameter("camera_index", 5)
+        self.declare_parameter("camera_index", 4)
         self.declare_parameter("timer_period", 0.03)
         self.declare_parameter("width", 640) #ขนาดความกว้าง
         self.declare_parameter("height", 480) #นาดความสูง

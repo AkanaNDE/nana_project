@@ -39,6 +39,8 @@ setup(
             'apriltag_cameraPI_pub2 = nana_core.apriltag_cameraPI_pub2:main',
             'apriltag_detector_sub2 = nana_core.apriltag_detector_sub2:main',
             'Orchestrator_node2 = nana_core.Orchestrator_node2:main',
+            'encoder_distance = nana_core.encoder_distance:main',
+            'test = nana_core.test_encoder_pub:main',
         ],
     },
 )

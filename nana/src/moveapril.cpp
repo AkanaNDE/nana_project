@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "driver/pcnt.h"
 
 // ===== micro-ROS =====
 #include <micro_ros_platformio.h>
@@ -51,10 +52,24 @@ const float ANG_DB = 0.02f;
 const uint32_t DEBUG_PERIOD_MS = 200;
 
 //////////////////////
+// Encoder Pins
+//////////////////////
+const int EA[4] = {34, 39, 18, 16};
+const int EB[4] = {35, 36, 19, 17};
+
+pcnt_unit_t encUnit[4] = {
+  PCNT_UNIT_0, PCNT_UNIT_1,
+  PCNT_UNIT_2, PCNT_UNIT_3
+};
+
+const uint32_t ENCODER_PUBLISH_PERIOD_MS = 100;
+
+//////////////////////
 // micro-ROS objects
 //////////////////////
 rcl_subscription_t cmd_subscriber;
 rcl_publisher_t ack_publisher;
+rcl_publisher_t encoder_publisher;
 
 rclc_executor_t executor;
 rclc_support_t support;
@@ -63,7 +78,10 @@ rcl_node_t node;
 
 geometry_msgs__msg__Twist cmd_msg_in;
 std_msgs__msg__String ack_msg;
+std_msgs__msg__String enc_msg;
+
 static char ack_buf[200];
+static char enc_buf[200];
 
 //////////////////////
 // State
@@ -73,6 +91,7 @@ static uint32_t last_cmd_ms = 0;
 static bool got_first_cmd = false;
 static bool micro_ros_connected = false;
 static uint32_t last_debug_ms = 0;
+static uint32_t last_encoder_pub_ms = 0;
 
 void stopAll();
 
@@ -100,6 +119,54 @@ void error_loop()
     rcl_ret_t temp_rc = fn;                  \
     (void)temp_rc;                           \
   }
+
+//////////////////////////////////////////////////
+// Encoder helpers
+//////////////////////////////////////////////////
+void setupEncoder(int i) {
+  pcnt_config_t cfg = {};
+  cfg.pulse_gpio_num = EA[i];
+  cfg.ctrl_gpio_num  = EB[i];
+  cfg.unit           = encUnit[i];
+  cfg.channel        = PCNT_CHANNEL_0;
+  cfg.pos_mode       = PCNT_COUNT_INC;
+  cfg.neg_mode       = PCNT_COUNT_DEC;
+  cfg.lctrl_mode     = PCNT_MODE_REVERSE;
+  cfg.hctrl_mode     = PCNT_MODE_KEEP;
+  cfg.counter_h_lim  = 30000;
+  cfg.counter_l_lim  = -30000;
+  pcnt_unit_config(&cfg);
+
+  cfg.pulse_gpio_num = EB[i];
+  cfg.ctrl_gpio_num  = EA[i];
+  cfg.channel        = PCNT_CHANNEL_1;
+  cfg.pos_mode       = PCNT_COUNT_DEC;
+  cfg.neg_mode       = PCNT_COUNT_INC;
+  pcnt_unit_config(&cfg);
+
+  pcnt_counter_pause(encUnit[i]);
+  pcnt_counter_clear(encUnit[i]);
+  pcnt_counter_resume(encUnit[i]);
+}
+
+long readEncoder(int i) {
+  int16_t c = 0;
+  pcnt_get_counter_value(encUnit[i], &c);
+  return (long)c;
+}
+
+void publish_encoder_ticks() {
+  long e1 = readEncoder(0);
+  long e2 = readEncoder(1);
+  long e3 = readEncoder(2);
+  long e4 = readEncoder(3);
+
+  snprintf(enc_buf, sizeof(enc_buf), "ENC:\t%ld\t%ld\t%ld\t%ld", e1, e2, e3, e4);
+  enc_buf[sizeof(enc_buf) - 1] = '\0';
+  enc_msg.data.size = strlen(enc_buf);
+
+  RCSOFTCHECK(rcl_publish(&encoder_publisher, &enc_msg, NULL));
+}
 
 //////////////////////////////////////////////////
 // micro-ROS helpers
@@ -308,12 +375,22 @@ void setup() {
   ledcAttachPin(M3_A, CH_M3A); ledcAttachPin(M3_B, CH_M3B);
   ledcAttachPin(M4_A, CH_M4A); ledcAttachPin(M4_B, CH_M4B);
 
+  //////////////////////
+  // Encoder setup
+  //////////////////////
+  for (int i = 0; i < 4; i++) {
+    pinMode(EA[i], INPUT);
+    pinMode(EB[i], INPUT);
+    setupEncoder(i);
+  }
+
   stopAll();
 
   allocator = rcl_get_default_allocator();
   node = rcl_get_zero_initialized_node();
   cmd_subscriber = rcl_get_zero_initialized_subscription();
   ack_publisher = rcl_get_zero_initialized_publisher();
+  encoder_publisher = rcl_get_zero_initialized_publisher();
   executor = rclc_executor_get_zero_initialized_executor();
 
   set_microros_serial_transports(Serial);
@@ -346,12 +423,26 @@ void setup() {
   ack_msg.data.size = 0;
   ack_buf[0] = '\0';
 
+  enc_msg.data.data = enc_buf;
+  enc_msg.data.capacity = sizeof(enc_buf);
+  enc_msg.data.size = 0;
+  enc_buf[0] = '\0';
+
   RCCHECK(
     rclc_publisher_init_default(
       &ack_publisher,
       &node,
       ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, String),
       "/esp_rx"
+    )
+  );
+
+  RCCHECK(
+    rclc_publisher_init_default(
+      &encoder_publisher,
+      &node,
+      ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, String),
+      "/encoder_ticks"
     )
   );
 
@@ -367,6 +458,8 @@ void setup() {
   );
 
   last_cmd_ms = millis();
+  last_encoder_pub_ms = millis();
+
   publish_ack("ESP READY (MDD3A mode, backward enabled)");
 }
 
@@ -377,6 +470,11 @@ void loop() {
   RCSOFTCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10)));
 
   uint32_t now = millis();
+
+  if ((now - last_encoder_pub_ms) > ENCODER_PUBLISH_PERIOD_MS) {
+    last_encoder_pub_ms = now;
+    publish_encoder_ticks();
+  }
 
   if (!got_first_cmd) {
     stopAll();

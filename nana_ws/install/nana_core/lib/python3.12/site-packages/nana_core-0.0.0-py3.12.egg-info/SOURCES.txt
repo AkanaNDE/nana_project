@@ -10,7 +10,6 @@ setup.py
 ../../build/nana_core/nana_core.egg-info/zip-safe
 launch/ joysticklaunch.launch.py
 nana_core/Orchestrator_node.py
-nana_core/Orchestrator_node2.py
 nana_core/Orchestrator_node3.py
 nana_core/__init__.py
 nana_core/apriltag_cameraPI_pub.py
@@ -20,6 +19,7 @@ nana_core/apriltag_detector_sub.py
 nana_core/apriltag_detector_sub2.py
 nana_core/armrpm_node.py
 nana_core/driverpm_node.py
+nana_core/encoder_distance.py
 nana_core/griprpm_node.py
 nana_core/joystick_node.py
 nana_core/mahorpm_node.py
@@ -27,6 +27,7 @@ nana_core/plot_cameraPI_pub.py
 nana_core/plot_chanon.py
 nana_core/plot_detector_sub.py
 nana_core/test.py
+nana_core/test_encoder_pub.py
 resource/nana_core
 test/test_copyright.py
 test/test_flake8.py
