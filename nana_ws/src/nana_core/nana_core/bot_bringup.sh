@@ -18,18 +18,6 @@ sleep 2
 
 tmux split-window -h -t $SESSION
 tmux send-keys -t $SESSION "export ROS_DOMAIN_ID=0" C-m
-tmux send-keys -t $SESSION "ros2 run nana_core apriltag_detector_sub" C-m
-
-sleep 2
-
-tmux split-window -h -t $SESSION
-tmux send-keys -t $SESSION "export ROS_DOMAIN_ID=0" C-m
-tmux send-keys -t $SESSION "ros2 run nana_core plot_detector_sub" C-m
-
-sleep 2
-
-tmux split-window -h -t $SESSION
-tmux send-keys -t $SESSION "export ROS_DOMAIN_ID=0" C-m
 tmux send-keys -t $SESSION "ros2 run nana_core Orchestrator_node" C-m
 
 sleep 2
