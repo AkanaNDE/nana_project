@@ -9,7 +9,7 @@ class EncoderToDistance(Node):
     def __init__(self):
         super().__init__('encoder_to_distance')
         self.declare_parameter('ticks_per_rev', 1000.0)
-        self.declare_parameter('wheel_diameter_cm', 12.0)
+        self.declare_parameter('wheel_diameter_cm', 11.0)
 
         # *** เพิ่ม calibration_factor: ปรับจาก (encoder_cm / actual_cm)
         #     ในกรณีนี้ encoder อ่าน 10 cm จริง 1 cm → factor = 10.0 ***
