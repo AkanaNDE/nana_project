@@ -41,6 +41,8 @@ setup(
             'Orchestrator_node2 = nana_core.Orchestrator_node2:main',
             'encoder_distance = nana_core.encoder_distance:main',
             'test = nana_core.test_encoder_pub:main',
+            'cab_detect = nana_core.cab_detect:main',
+            'ControlPID = nana_core.ControlPID:main',
         ],
     },
 )

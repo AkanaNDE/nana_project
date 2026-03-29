@@ -39,3 +39,6 @@ sudo dmesg | grep ttyUSB
 
 check USB port
 ls /dev/ttyUSB*
+
+sudo ip link set wlan1 up
+

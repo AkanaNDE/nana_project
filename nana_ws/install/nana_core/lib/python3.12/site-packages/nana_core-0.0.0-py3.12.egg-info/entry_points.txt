@@ -1,4 +1,5 @@
 [console_scripts]
+ControlPID = nana_core.ControlPID:main
 Orchestrator_node = nana_core.Orchestrator_node:main
 Orchestrator_node2 = nana_core.Orchestrator_node2:main
 apriltag_cameraPI_pub = nana_core.apriltag_cameraPI_pub:main
@@ -7,6 +8,7 @@ apriltag_chanon = nana_core.apriltag_chanon:main
 apriltag_detector_sub = nana_core.apriltag_detector_sub:main
 apriltag_detector_sub2 = nana_core.apriltag_detector_sub2:main
 armrpm_node = nana_core.armrpm_node:main
+cab_detect = nana_core.cab_detect:main
 driverpm_node = nana_core.driverpm_node:main
 encoder_distance = nana_core.encoder_distance:main
 griprpm_node = nana_core.griprpm_node:main

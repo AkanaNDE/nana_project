@@ -91,14 +91,29 @@ class CameraCompressedPublisher(Node):
                 with self._lock:
                     self.latest_frame = frame
 
-    def timer_callback(self):
-        with self._lock:
-            frame = self.latest_frame
+        def timer_callback(self):
+            with self._lock:
+                frame = self.latest_frame
 
-        if frame is None:
-            return
+            if frame is None:
+                return
 
-        ok, enc = cv2.imencode(".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), self.jpeg_quality])
+        # แปลงเป็น grayscale เพื่อตรวจความสว่าง
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        brightness = gray.mean()
+
+        # ถ้าภาพมืดมาก (กลางคืน)
+        if brightness < 80:
+            frame = cv2.convertScaleAbs(frame, alpha=2.0, beta=60)
+
+            # เพิ่ม contrast
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+            gray = clahe.apply(gray)
+            frame = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+
+        ok, enc = cv2.imencode(".jpg", frame,
+                            [int(cv2.IMWRITE_JPEG_QUALITY), self.jpeg_quality])
         if not ok:
             return
 

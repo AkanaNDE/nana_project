@@ -9,11 +9,6 @@
 #include <rclc/executor.h>
 #include <rmw_microros/rmw_microros.h>
 
-#include <geometry_msgs/msg/twist.h>
-#include <std_msgs/msg/string.h>
-#include <rosidl_runtime_c/string_functions.h>
-
-
 #include <std_msgs/msg/bool.h>
 
 // ================= Servo =================
@@ -28,13 +23,15 @@ const int STEP_PIN = 22;
 const int DIR_PIN = 23;
 const int ENABLE_PIN = 21;
 
-const int STEP_DELAY_US = 800;
+const int STEP_DELAY_US = 1500;
 
 // ================= microROS =================
-rcl_subscription_t subscriber;
+rcl_subscription_t sub_plant;
+rcl_subscription_t sub_plant2;
 rcl_publisher_t publisher;
 
 std_msgs__msg__Bool plant_msg;
+std_msgs__msg__Bool plant2_msg;
 std_msgs__msg__Bool finish_msg;
 
 rclc_executor_t executor;
@@ -43,8 +40,9 @@ rcl_allocator_t allocator;
 rcl_node_t node;
 
 bool start_sequence = false;
+bool sequence_running = false;
 
-// ================= Stepper Function =================
+// ================= Stepper =================
 void stepper_run(bool dir, int duration_ms)
 {
   digitalWrite(DIR_PIN, dir);
@@ -61,13 +59,24 @@ void stepper_run(bool dir, int duration_ms)
 }
 
 // ================= Callback =================
-void subscription_callback(const void * msgin)
+void plant_callback(const void * msgin)
 {
   const std_msgs__msg__Bool * msg = (const std_msgs__msg__Bool *)msgin;
 
-  if (msg->data == true)
+  if (msg->data && !sequence_running)
   {
     Serial.println("Plant command received");
+    start_sequence = true;
+  }
+}
+
+void plant2_callback(const void * msgin)
+{
+  const std_msgs__msg__Bool * msg = (const std_msgs__msg__Bool *)msgin;
+
+  if (msg->data && !sequence_running)
+  {
+    Serial.println("Plant2 command received");
     start_sequence = true;
   }
 }
@@ -76,9 +85,9 @@ void subscription_callback(const void * msgin)
 void setup()
 {
   Serial.begin(115200);
+  delay(2000);
 
   set_microros_serial_transports(Serial);
-  delay(2000);
 
   allocator = rcl_get_default_allocator();
 
@@ -86,26 +95,45 @@ void setup()
 
   rclc_node_init_default(&node, "plant_node", "", &support);
 
+  // subscribe /plant
   rclc_subscription_init_default(
-    &subscriber,
+    &sub_plant,
     &node,
     ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool),
     "/plant");
 
+  // subscribe /plant2
+  rclc_subscription_init_default(
+    &sub_plant2,
+    &node,
+    ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool),
+    "/plant2");
+
+  // publisher
   rclc_publisher_init_default(
     &publisher,
     &node,
     ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool),
     "/Finishplant");
 
-  rclc_executor_init(&executor, &support.context, 1, &allocator);
+  // executor
+  rclc_executor_init(&executor, &support.context, 2, &allocator);
 
   rclc_executor_add_subscription(
     &executor,
-    &subscriber,
+    &sub_plant,
     &plant_msg,
-    &subscription_callback,
+    &plant_callback,
     ON_NEW_DATA);
+
+  rclc_executor_add_subscription(
+    &executor,
+    &sub_plant2,
+    &plant2_msg,
+    &plant2_callback,
+    ON_NEW_DATA);
+
+  finish_msg.data = false;
 
   // Servo
   servo1.attach(servo1_pin);
@@ -115,6 +143,7 @@ void setup()
   pinMode(STEP_PIN, OUTPUT);
   pinMode(DIR_PIN, OUTPUT);
   pinMode(ENABLE_PIN, OUTPUT);
+
   digitalWrite(ENABLE_PIN, LOW);
 
   Serial.println("Plant system ready");
@@ -123,65 +152,54 @@ void setup()
 // ================= Loop =================
 void loop()
 {
-  rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10));
+  rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
 
   if (start_sequence)
   {
     start_sequence = false;
+    sequence_running = true;
 
     Serial.println("Start planting sequence");
 
-    // 1 stepper ทวน 2 วิ
     stepper_run(HIGH, 800);
-
-    // 2 stepper ตาม 1 วิ
     stepper_run(LOW, 300);
 
-    // 3 servo1 120
     servo1.write(120);
     delay(1000);
 
-    // 4 servo1 100
     servo1.write(100);
     delay(1000);
 
-    // 5 stepper ทวน 1 วิ
     stepper_run(HIGH, 300);
 
-    // 6 servo1 160
     servo1.write(175);
     delay(1000);
 
-    // 7 servo1 110
     servo1.write(110);
     delay(1000);
 
-    // 8 stepper ทวน 2 วิ
     stepper_run(LOW, 800);
 
     servo1.write(180);
     delay(1000);
 
-    // 9 servo2 120
     servo2.write(120);
     delay(1000);
 
-    // 10 servo2 70
     servo2.write(70);
     delay(1000);
 
-    // 11 servo2 120
     servo2.write(120);
     delay(1000);
 
-    // 12 servo2 70
     servo2.write(70);
     delay(1000);
 
-    // publish finish
     finish_msg.data = true;
     rcl_publish(&publisher, &finish_msg, NULL);
 
     Serial.println("Plant sequence finished");
+
+    sequence_running = false;
   }
 }

@@ -23,15 +23,15 @@ void loop() {
 
   // ไปตำแหน่ง 0
   //myServo.write(180);
-  myServo2.write(90);
-  myServo3.write(0);
+  //myServo2.write(90);
+  myServo3.write(90);
   Serial.println("Position 100");
   delay(1000);
 
   // ไปตำแหน่ง 60
   //myServo.write(120);
-  myServo2.write(120);
-  myServo3.write(90);
+  //myServo2.write(120);
+  myServo3.write(180);
   Serial.println("Position 120");
   delay(1000);
 

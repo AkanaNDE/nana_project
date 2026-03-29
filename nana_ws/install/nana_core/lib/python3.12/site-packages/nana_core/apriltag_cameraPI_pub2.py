@@ -9,7 +9,7 @@ class CameraCompressedPublisher(Node):
         super().__init__("camera_compressed_publisher")
         
         # Quality parameters
-        self.declare_parameter("camera_index", 4)
+        self.declare_parameter("camera_index", 0)
         self.declare_parameter("jpeg_quality", 80)
         
         self.camera_index = self.get_parameter("camera_index").value

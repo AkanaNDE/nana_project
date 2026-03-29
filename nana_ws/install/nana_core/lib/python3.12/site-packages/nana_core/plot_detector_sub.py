@@ -12,7 +12,7 @@ import numpy as np
 from pupil_apriltags import Detector
 
 
-OFFSET = 0
+OFFSET = 100
 FX = 400.0
 FY = 400.0
 
